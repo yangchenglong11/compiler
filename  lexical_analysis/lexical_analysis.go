@@ -60,10 +60,10 @@ func GetContent(path string) (*bytes.Buffer, error) {
 	return bytes.NewBuffer(c), nil
 }
 
-func LexicalAnalysis(path string) (*[]Token, *[]Symble, error) {
+func LexicalAnalysis(path string) (*Tokens, *Symbles, error) {
 	var (
-		token  []Token
-		symble []Symble
+		token  Tokens
+		symble Symbles
 	)
 	c, err := GetContent(path)
 	if err != nil {
@@ -83,59 +83,59 @@ func LexicalAnalysis(path string) (*[]Token, *[]Symble, error) {
 				return nil, nil, err
 			}
 			s := Symble{
-				Number: len(symble) + 1,
+				Number: len(symble.S) + 1,
 				Kind:   t,
 				Name:   fmt.Sprintf("%s", num),
 			}
-			symble = append(symble, s)
+			symble.S = append(symble.S, s)
 			to := Token{
-				Label: len(token),
+				Label: len(token.T),
 				Name:  fmt.Sprintf("%s", num),
 				Code:  t,
-				Addr:  len(symble),
+				Addr:  len(symble.S),
 			}
-			token = append(token, to)
+			token.T = append(token.T, to)
 			continue
 		case Letter:
-			t,s,err := handleLetter(b, c)
+			t, s, err := handleLetter(b, c)
 			if err != nil {
 				return nil, nil, err
 			}
-			if s == "" {
-				continue
-			}
 			sy := Symble{
-				Number: len(symble) + 1,
+				Number: len(symble.S) + 1,
 				Kind:   t,
 				Name:   s,
 			}
-			symble = append(symble, sy)
+			symble.S = append(symble.S, sy)
 			to := Token{
-				Label: len(token),
+				Label: len(token.T),
 				Name:  s,
 				Code:  t,
-				Addr:  len(symble),
+				Addr:  len(symble.S),
 			}
-			token = append(token, to)
+			token.T = append(token.T, to)
 			continue
 		case Other:
-			o,s,err := handlerOther(b, c)
+			o, s, err := handlerOther(b, c)
 			if err != nil {
 				return nil, nil, err
 			}
+			if o == 39 {
+				continue
+			}
 			sy := Symble{
-				Number: len(symble) + 1,
+				Number: len(symble.S) + 1,
 				Kind:   o,
 				Name:   s,
 			}
-			symble = append(symble, sy)
+			symble.S = append(symble.S, sy)
 			to := Token{
-				Label: len(token),
+				Label: len(token.T),
 				Name:  s,
 				Code:  o,
-				Addr:  len(symble),
+				Addr:  len(symble.S),
 			}
-			token = append(token, to)
+			token.T = append(token.T, to)
 			continue
 		}
 	}
@@ -154,11 +154,19 @@ func CheckByte(f *bytes.Buffer) (byte, error) {
 
 	t := what(cSubTemp)
 	if t <= Letter {
+		fmt.Println("check", string(cSubTemp))
 		return cSubTemp, nil
 	}
 
 	if cSubTemp == NewLine {
 		rows = rows + 1
+		cSubTemp, err = f.ReadByte()
+		if err != nil {
+			if err == io.EOF {
+				return Space, err
+			}
+			return 0x0, err
+		}
 	}
 
 	//判断是否为空格,合并多个空格为一个
@@ -188,6 +196,12 @@ func CheckByte(f *bytes.Buffer) (byte, error) {
 		if cTemp == '/' {
 			for cTemp != '\n' {
 				cTemp, err = f.ReadByte()
+				if err != nil {
+					if err == io.EOF {
+						return Space, err
+					}
+					return 0x0, err
+				}
 			}
 			//遇到注释，在注释结尾返回空格
 			return NewLine, nil
@@ -196,6 +210,7 @@ func CheckByte(f *bytes.Buffer) (byte, error) {
 			f.UnreadByte()
 		}
 	}
+	fmt.Println("check", string(cSubTemp))
 	return cSubTemp, nil
 }
 
@@ -207,7 +222,7 @@ func handleNumber(b byte, buf *bytes.Buffer) (int, float64, error) {
 	)
 
 	// continue read
-	temp, err = buf.ReadByte()
+	temp, err = CheckByte(buf)
 	if err != nil {
 		if err == io.EOF {
 			goto finish
@@ -220,7 +235,7 @@ func handleNumber(b byte, buf *bytes.Buffer) (int, float64, error) {
 		// is a real
 		if temp == '.' {
 			// continue read
-			temp, err = buf.ReadByte()
+			temp, err = CheckByte(buf)
 			if err != nil {
 				if err == io.EOF {
 					goto finish
@@ -230,7 +245,7 @@ func handleNumber(b byte, buf *bytes.Buffer) (int, float64, error) {
 			// calculate num
 			for i := 0; what(temp) == 0; i++ {
 				num = num + float64(int(temp)-48)/(math.Pow10(i))
-				temp, err = buf.ReadByte()
+				temp, err = CheckByte(buf)
 				if err != nil {
 					if err == io.EOF {
 						goto finish
@@ -238,15 +253,15 @@ func handleNumber(b byte, buf *bytes.Buffer) (int, float64, error) {
 					return 0, 0, err
 				}
 			}
+			buf.UnreadByte()
 			goto real
-
 		}
 	}
 
 	// is a Integer
 	for what(temp) == 0 {
 		num = num*10 + float64(int(temp)-48)
-		temp, err = buf.ReadByte()
+		temp, err = CheckByte(buf)
 		if err != nil {
 			if err == io.EOF {
 				goto finish
@@ -254,157 +269,161 @@ func handleNumber(b byte, buf *bytes.Buffer) (int, float64, error) {
 			return 0, 0, err
 		}
 	}
+	buf.UnreadByte()
 
 real:
-	fmt.Println("(", MachineCode[Real], ",", num, ")")
 	return MachineCode[Real], num, nil
 finish:
-
-	fmt.Println("(", MachineCode[Integer], ",", num, ")")
 	return MachineCode[Integer], num, nil
-
 }
 
-func handleLetter(b byte, buf *bytes.Buffer) (int,string,error) {
+func handleLetter(b byte, buf *bytes.Buffer) (int, string, error) {
 	var (
-		t []byte
 		temp []byte
-		err error
+		err  error
 	)
-	temp = append(temp,b)
-	switch  {
-	case buf.Len()>=6:
-		t = make([]byte,6)
-		buf.Read(t)
-		temp = append(temp,t...)
-		switch string(temp) {
-		case "integer":
-		case "program":
-			return MachineCode[string(temp)],string(temp),nil
-		default:
-			goto other
-		}
-	case buf.Len()>=4:
-		t = make([]byte,4)
-		buf.Read(t)
-		temp = append(temp,t...)
-		switch string(temp) {
-		case "begin":
-		case "false":
-		case "while":
-			return MachineCode[string(temp)],string(temp),nil
-		default:
-			goto other
-		}
-	case buf.Len()>=3:
-		t = make([]byte,3)
-		buf.Read(t)
-		temp = append(temp,t...)
-		switch string(temp) {
-		case "bool":
-		case "else":
-		case "real":
-		case "then":
-		case "true":
-			return MachineCode[string(temp)],string(temp),nil
-		default:
-			goto other
-		}
-	case buf.Len()>=2:
-		t = make([]byte,2)
-		buf.Read(t)
-		temp = append(temp,t...)
-		switch string(temp) {
-		case "not":
-		case "and":
-		case "end":
-		case "var":
-			return MachineCode[string(temp)],string(temp),nil
-		default:
-			goto other
-		}
-	case buf.Len()>=1:
-		b,_ = buf.ReadByte()
-		temp = append(temp,b)
-		switch string(temp) {
-		case "if":
-		case "or":
-		case "do":
-			return MachineCode[string(temp)],string(temp),nil
-		default:
-			goto other
-		}
-	case buf.Len()>=0:
-		return MachineCode[Identifier], string(temp), nil
+	temp = append(temp, b)
 
-	default:
+	if buf.Len() >= 1 {
+		b, _ = CheckByte(buf)
+		temp = append(temp, b)
+		switch string(temp) {
+		case "do","if","or":
+			return MachineCode[string(temp)], string(temp), nil
+		default:
+			buf.UnreadByte()
+			temp = temp[:len(temp)-1]
+		}
 	}
-other:
-	b, err = buf.ReadByte()
+
+
+	if buf.Len() >= 2 {
+		for i := 0; i < 2; i++ {
+			b, _ := CheckByte(buf)
+			temp = append(temp, b)
+		}
+		switch string(temp) {
+		case "var","not","and","end":
+			return MachineCode[string(temp)], string(temp), nil
+		default:
+			for i := 0; i < 2; i++ {
+				buf.UnreadByte()
+			}
+			temp = temp[:len(temp)-2]
+		}
+	}
+
+
+	if buf.Len() >= 3 {
+		for i := 0; i < 3; i++ {
+			b, _ := CheckByte(buf)
+			temp = append(temp, b)
+		}
+		fmt.Println("555",string(temp))
+		switch string(temp) {
+		case "true","bool","else","real","then":
+			return MachineCode[string(temp)], string(temp), nil
+		default:
+			temp = temp[:len(temp)-3]
+			for i := 0; i < 3; i++ {
+				buf.UnreadByte()
+			}
+		}
+		fmt.Println("666",string(temp))
+	}
+
+
+	if buf.Len() >= 4 {
+		for i := 0; i < 4; i++ {
+			b, _ := CheckByte(buf)
+			temp = append(temp, b)
+		}
+		fmt.Println("1",string(temp))
+		switch string(temp) {
+		case "false","begin","while":
+			return MachineCode[string(temp)], string(temp), nil
+		default:
+			for i := 0; i < 4; i++ {
+				buf.UnreadByte()
+			}
+			temp = temp[:len(temp)-4]
+		}
+		fmt.Println("2",string(temp))
+	}
+
+
+	if buf.Len() >= 6 {
+		for i := 0; i < 6; i++ {
+			b, _ := CheckByte(buf)
+			temp = append(temp, b)
+		}
+		fmt.Println("3",string(temp))
+		switch string(temp) {
+		case "program","integer":
+			return MachineCode[string(temp)], string(temp), nil
+		default:
+			for i := 0; i < 6; i++ {
+				buf.UnreadByte()
+			}
+			temp = temp[:len(temp)-6]
+		}
+		fmt.Println("4",string(temp))
+	}
+
+	b, err = CheckByte(buf)
 	if err != nil {
 		if err == io.EOF {
-			return MachineCode[Identifier],string(temp),nil
+			return MachineCode[Identifier], string(temp), nil
 		}
 		return 0, "", err
 	}
 	for what(b) == Letter {
-		temp = append(temp,b)
-		b, err = buf.ReadByte()
+		temp = append(temp, b)
+		b, err = CheckByte(buf)
 		if err != nil {
 			if err == io.EOF {
-				return MachineCode[Identifier],string(temp),nil
+				return MachineCode[Identifier], string(temp), nil
 			}
 			return 0, "", err
 		}
 	}
-	return MachineCode[Identifier],string(temp),nil
+	buf.UnreadByte()
+	temp = temp[:len(temp)-1]
+
+	return MachineCode[Identifier], string(temp), nil
 }
 
-
-func handlerOther(b byte, buf *bytes.Buffer) (int,string,error){
+func handlerOther(b byte, buf *bytes.Buffer) (int, string, error) {
 	var (
 		temp []byte
 	)
-	temp = append(temp,b)
-	switch  {
-	case buf.Len()>=1:
-		b,_ = buf.ReadByte()
-		temp = append(temp,b)
-		switch string(temp) {
-		case ">=":
-		case "<=":
-		case "<>":
-		case ":=":
-			return MachineCode[string(temp)],string(temp),nil
-		default:
-			return MachineCode["err"],"#",nil
-		}
-	case buf.Len()>=0:
-		switch string(temp) {
-		case "+":
-		case "-":
-		case "*":
-		case "/":
-		case ".":
-		case ",":
-		case "(":
-		case ")":
-		case ":":
-		case ";":
-		case "=":
-		case ">":
-		case "<":
-			return MachineCode[string(temp)],string(temp),nil
-		case "":
-			return MachineCode[""],"",nil
-		default:
-			return MachineCode["err"],"#",nil
-		}
-
-	default:
-
+	temp = append(temp, b)
+	if isSpace(b) {
+		return MachineCode[""], "", nil
 	}
-	return MachineCode["err"],"#",nil
+
+	if buf.Len() >= 0 {
+		switch string(temp) {
+		case "<","+",">","=",";",":",")","(",",",".","/","*","-":
+			return MachineCode[string(temp)], string(temp), nil
+		default:
+			return MachineCode["err"], "#", nil
+		}
+	}
+
+	if buf.Len() >= 1 {
+		b, _ = CheckByte(buf)
+		temp = append(temp, b)
+		fmt.Println("dsada",string(temp))
+		switch string(temp) {
+		case ":=",">=","<>","<=":
+			return MachineCode[string(temp)], string(temp), nil
+		default:
+			return MachineCode["err"], "#", nil
+		}
+	}
+
+	return MachineCode["err"], "#", nil
 }
 
 func isSpace(b byte) bool {
@@ -412,16 +431,16 @@ func isSpace(b byte) bool {
 }
 
 func main() {
-	t,s,err := LexicalAnalysis("./test.lu")
+	t, s, err := LexicalAnalysis("./test.lu")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	if t!= nil {
-		fmt.Println(*t)
+	if t != nil {
+		t.String()
 	}
 	if s != nil {
-		fmt.Println(*s)
+		s.String()
 	}
 
 }

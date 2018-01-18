@@ -29,6 +29,10 @@
 
 package main
 
+import (
+	"fmt"
+)
+
 const (
 	SBUFSIZE   = 256 // 定义扫描缓冲区的大小
 	Identifier = "TypeIdentifier"
@@ -67,6 +71,26 @@ type Symble struct {
 	Number int    //序号
 	Kind   int    //类型
 	Name   string //名字
+}
+
+type Tokens struct {
+	T []Token
+}
+
+func (t Tokens)String()  {
+	for i := range t.T {
+		fmt.Printf("%+v\n",t.T[i])
+	}
+}
+
+type Symbles struct {
+	S []Symble
+}
+
+func (s Symbles)String()  {
+	for i := range s.S {
+		fmt.Printf("%+v\n",s.S[i])
+	}
 }
 
 var rows = 0

@@ -1,1 +1,7 @@
-program do if
+program
+begin
+i := m
+while (i> a) {
+ i = i+i
+}
+end
