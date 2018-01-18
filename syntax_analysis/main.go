@@ -51,17 +51,24 @@
 <Number> -> 0│1│2│3│4│5│6│7│8│9
 */
 
+/*
+E -> E + T | T
+T -> T * F | F
+F -> P ↑ F | P
+P -> (E) | i
+*/
 package main
 
 import (
   "fmt"
+  "errors"
 )
 
 var (
   Above    = ">"
   Below    = "<"
   Equal    = "="
-  relation = [7][7]string{// 算符优先关系，-1代表小于，1代表大于，0代表等于
+  relation = [7][7]string{ // 算符优先关系，-1代表小于，1代表大于，0代表等于
     {Above, Below, Below, Below, Below, Above, Above},
     {Above, Above, Below, Below, Below, Above, Above},
     {Above, Above, Below, Below, Below, Above, Above},
@@ -70,29 +77,71 @@ var (
     {Above, Above, Above, "", "", Above, Above},
     {Below, Below, Below, Below, Below, "", Equal},
   }
-  ids = [7]string{"+", "*", "↑", "i", "(", ")", "#"}
+  Vt = [7]string{"+", "*", "↑", "i", "(", ")", "#"} // 终结符集
+  Vn = [4]string{"E", "T", "F", "P"} // 非终结符
 )
 
 func reverse(array Stack) Stack {
   var result Stack
-  newArray := array
+  newArray := &array
   for i := newArray.Len(); i > 0 ; i-- {
-    if r, err := newArray.Pop(); err == nil {
-      result.Push(r)
-    }
+    result.Push(newArray.Pop())
   }
 
   return result
 }
 
+func getRelation(a, b string) (string, error) { // 获取 a 与 b 的关系
+  var (
+    indexA = -1
+    indexB = -1
+  )
+  for i, v := range Vt {
+    if a == v {
+      indexA = i
+    }
+    if b == v {
+      indexB = i
+    }
+  }
+  if indexA < 0 || indexB < 0 {
+    return "", errors.New("no this letter")
+  }
+
+  return relation[indexA][indexB], nil
+}
+
+func analysis(stack, input *Stack) (bool, error) {
+  l := len(*input) + 2
+  width := fmt.Sprintf("%%-%ds%%%ds%%16s\n", l, l)
+  fmt.Printf(fmt.Sprintf("%%-%ds%%%ds%%15s\n", l - 1, l - 2), "栈", "输入流", "操作")
+  fmt.Printf(width, *stack, reverse(*input), "initial")
+  for input.Top() != "#" {
+    newStr := input.Pop()
+    curStr := stack.Top()
+    relation, err := getRelation(curStr, newStr)
+    if err != nil {
+      return false, err
+    } else {
+      if relation == Below {
+        stack.Push(newStr)
+        operation := fmt.Sprintf("%s<%s,push %s", curStr, newStr, newStr)
+        fmt.Printf(width, *stack, reverse(*input), operation)
+      }
+    }
+  }
+
+  return true, nil
+}
+
 func main() {
   fmt.Printf("%18s\n", "算符优先关系表")
-  for i := 0; i < len(ids); i++ {
-    fmt.Printf("%5s", ids[i])
+  for i := 0; i < len(Vt); i++ {
+    fmt.Printf("%5s", Vt[i])
   }
   fmt.Println()
-  for i := 0; i < len(ids); i++ {
-    fmt.Printf("%1s %3s", ids[i], relation[i][0])
+  for i := 0; i < len(Vt); i++ {
+    fmt.Printf("%1s %3s", Vt[i], relation[i][0])
     for j := 1; j < len(relation[i]); j++ {
       fmt.Printf("%5s", relation[i][j])
     }
@@ -107,10 +156,14 @@ func main() {
   )
   fmt.Println("\n输入语句, 以#结束:")
   fmt.Scanln(&input)
-  for i := len(input) - 1; i >= 0; i-- {
-    inputStack.Push(string(input[i]))
+  if input[len(input) - 1:] != "#" {
+    fmt.Println("unvalid input")
+  } else {
+    for i := len(input) - 1; i >= 0; i-- {
+      inputStack.Push(string(input[i]))
+    }
+    stack.Push("#")
+
+    analysis(&stack, &inputStack)
   }
-  stack.Push("#")
-  fmt.Printf("%10s%10s\n", "栈", "输入栈")
-  fmt.Printf("%10s%10s\n", stack, reverse(inputStack))
 }
