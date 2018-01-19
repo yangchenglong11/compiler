@@ -117,6 +117,17 @@ func LexicalAnalysis(path string) (*Tokens, *Symbles, error) {
 			if err != nil {
 				return nil, nil, err
 			}
+			if t < MachineCode[Identifier] {
+				to := Token{
+					Label: len(token.T),
+					Name:  s,
+					Code:  t,
+					Addr:  -1,
+				}
+				token.T = append(token.T, to)
+				continue
+			}
+
 			sy := Symble{
 				Number: len(symble.S) + 1,
 				Kind:   t,
@@ -139,17 +150,11 @@ func LexicalAnalysis(path string) (*Tokens, *Symbles, error) {
 			if o == 39 {
 				continue
 			}
-			sy := Symble{
-				Number: len(symble.S) + 1,
-				Kind:   o,
-				Name:   s,
-			}
-			symble.S = append(symble.S, sy)
 			to := Token{
 				Label: len(token.T),
 				Name:  s,
 				Code:  o,
-				Addr:  len(symble.S),
+				Addr:  -1,
 			}
 			token.T = append(token.T, to)
 			continue

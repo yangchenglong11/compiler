@@ -3,6 +3,6 @@ begin
 i:=8.43.43
 m=3f45
 r=23.43h34
-while (i>a)
-  i=i+i
+while (i>a) do
+  if (c<d) thenx := y+z
 end
