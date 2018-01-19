@@ -72,19 +72,19 @@ func analysis(stack, input *Stack) (bool, error) {
   for input.Left() != "#" || string(*stack) != "#N" {
     newStr := input.Left()
     curStr := stack.Top()
-     fmt.Println("栈顶元素与输入元素", curStr, newStr)
+    //fmt.Println("栈顶元素与输入元素", curStr, newStr)
 
     j := k
     if !isContrainAny(Vt, curStr) {
       j = k - 1
     }
-     fmt.Println("j k 下标", j, k)
+    //fmt.Println("j k 下标", j, k)
 
     for {
       curStr = stack.Index(j)
       if relation, err := getRelation(curStr, newStr); err == nil && relation == Above {
         q := curStr
-         fmt.Println("当前元素q", q)
+        //fmt.Println("当前元素q", q)
         if j > 0 && isContrainAny(Vt, stack.Index(j-1)) {
           j--
         } else if j > 1 && !isContrainAny(Vt, stack.Index(j-1)) {
@@ -92,35 +92,48 @@ func analysis(stack, input *Stack) (bool, error) {
         }
         for {
           p := stack.Index(j)
-          if relation, err := getRelation(p, q); err == nil && relation == Below {
-             fmt.Println("栈内终结符比较", p, relation, q)
-            if strings.IndexAny(string(*stack), q) - strings.IndexAny(string(*stack), p) == 1 {
-              operation := fmt.Sprintf("%s<%s>%s,replace %s", p, q, newStr, string(*stack)[j+1:])
+          //fmt.Println("当前元素pq", p, q)
+          if relation, err := getRelation(p, q); err == nil {
+            if relation == Below {
+              //fmt.Println("栈内终结符比较", p, relation, q)
+              if strings.IndexAny(string(*stack), q) - strings.IndexAny(string(*stack), p) == 1 {
+                operation := fmt.Sprintf("%s<%s>%s,replace %s", p, q, newStr, string(*stack)[j+1:])
+                stack.Replace(j+1, k+1, "N")
+                fmt.Printf(width, *stack, *input, operation)
+                k = j + 1
+                break
+              }
+              q = p
+              if j > 0 && isContrainAny(Vt, stack.Index(j-1)) {
+                if j - 1 > 0 {
+                  j--
+                }
+              } else if j > 1 && !isContrainAny(Vt, stack.Index(j-1)) {
+                if j - 2 > 0 {
+                  j -= 2
+                }
+              }
+              //fmt.Println("下标q j k", q, j, k)
+              //fmt.Println("当前栈", *stack, j, k)
+              operation := fmt.Sprintf("%s<%s>%s,replace %s", p, curStr, newStr, string(*stack)[j+1:])
               stack.Replace(j+1, k+1, "N")
               fmt.Printf(width, *stack, *input, operation)
               k = j + 1
-              break
-            }
-            q = stack.Index(j)
-            if j > 0 && isContrainAny(Vt, stack.Index(j-1)) {
-              if j - 1 > 0 {
-                j--
+            } else if relation == Equal {
+              if input.Left() == "#" && string(*stack) == "#N" {
+                return true, nil
               }
-            } else if j > 1 && !isContrainAny(Vt, stack.Index(j-1)) {
-              if j - 2 > 0 {
+              q = p
+              if j > 0 && isContrainAny(Vt, stack.Index(j-1)) {
+                j--
+              } else if j > 1 && !isContrainAny(Vt, stack.Index(j-1)) {
                 j -= 2
               }
+            } else {
+              break
             }
-             fmt.Println("下标q j k", q, j, k)
-             fmt.Println("当前栈", *stack, j, k)
-            operation := fmt.Sprintf("%s<%s>%s,replace %s", p, curStr, newStr, string(*stack)[j+1:])
-            stack.Replace(j+1, k+1, "N")
-            fmt.Printf(width, *stack, *input, operation)
-            k = j + 1
-          } else if err != nil {
+          } else {
             return false, err
-          } else if relation != Below {
-            break
           }
         }
       } else if err != nil {
@@ -135,7 +148,7 @@ func analysis(stack, input *Stack) (bool, error) {
     }
 
     relation, err := getRelation(stack.Index(j), newStr)
-     fmt.Println("栈顶终结符比较", stack.Index(j), relation, newStr)
+    //fmt.Println("栈顶终结符比较", stack.Index(j), relation, newStr)
     if err != nil {
       return false, err
     } else {
@@ -150,7 +163,7 @@ func analysis(stack, input *Stack) (bool, error) {
     }
   }
 
-   fmt.Println("end", *stack, *input)
+  //fmt.Println("end", *stack, *input)
   return true, nil
 }
 
