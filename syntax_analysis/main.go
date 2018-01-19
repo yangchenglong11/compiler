@@ -68,7 +68,7 @@ var (
   Above    = ">"
   Below    = "<"
   Equal    = "="
-  relation = [7][7]string{ // 算符优先关系，-1代表小于，1代表大于，0代表等于
+  relation = [7][7]string{// 算符优先关系，-1代表小于，1代表大于，0代表等于
     {Above, Below, Below, Below, Below, Above, Above},
     {Above, Above, Below, Below, Below, Above, Above},
     {Above, Above, Below, Below, Below, Above, Above},
@@ -78,7 +78,7 @@ var (
     {Below, Below, Below, Below, Below, "", Equal},
   }
   Vt = []string{"+", "*", "↑", "i", "(", ")", "#"} // 终结符集
-  Vn = []string{"E", "T", "F", "P"} // 非终结符
+  Vn = []string{"E", "T", "F", "P"}                // 非终结符
 )
 
 func isContrainAny(slice []string, string string) bool {
@@ -113,22 +113,58 @@ func getRelation(a, b string) (string, error) { // 获取 a 与 b 的关系
 func analysis(stack, input *Stack) (bool, error) {
   l := len(*input) + 2
   width := fmt.Sprintf("%%-%ds%%%ds%%16s\n", l, l)
-  fmt.Printf(fmt.Sprintf("%%-%ds%%%ds%%12s\n", l - 2, l - 2), "栈", "输入流", "操作")
+  fmt.Printf(fmt.Sprintf("%%-%ds%%%ds%%12s\n", l-2, l-2), "栈", "输入流", "操作")
   fmt.Printf(width, *stack, input.Reverse(), "initial")
+  var k = 0
   for input.Top() != "#" {
-    newStr := input.Pop()
+    newStr := input.Top()
     curStr := stack.Top()
-    //relation, err := getRelation(curStr, newStr)
-    //if err != nil {
-    //  return false, err
-    //} else {
-    //  if relation == Below {
-    //    stack.Push(newStr)
-    //    operation := fmt.Sprintf("%s<%s,push %s", curStr, newStr, newStr)
-    //    fmt.Printf(width, *stack, reverse(*input), operation)
-    //  }
-    //}
-    
+    fmt.Println("a1", newStr, curStr)
+
+    j := k
+    if !isContrainAny(Vt, curStr) {
+      j = k - 1
+    }
+
+    for {
+      if relation, err := getRelation(stack.Index(j), newStr); err == nil && relation == Above {
+        q := stack.Index(j)
+        if isContrainAny(Vt, stack.Index(j-1)) {
+          j--
+        } else {
+          j -= 2
+        }
+        for {
+          if relation, err := getRelation(stack.Index(j), q); err == nil && relation == Below {
+            q = stack.Index(j)
+            if isContrainAny(Vt, stack.Index(j-1)) {
+              j--
+            } else {
+              j -= 2
+            }
+            operation := fmt.Sprintf("%s<%s>%s,replace %s", stack.Index(j), stack.Index(k), newStr, string(*stack)[j+1:k+1])
+            stack.Replace(j+1, k+1, "N")
+            fmt.Printf(width, *stack, input.Reverse(), operation)
+            k++
+          } else if err != nil {
+            return false, err
+          }
+        }
+      } else if err != nil {
+        return false, err
+      }
+    }
+
+    relation, err := getRelation(stack.Index(j), newStr)
+    if err != nil {
+      return false, err
+    } else {
+      if relation == Below || relation == Equal {
+        stack.Push(input.Pop())
+        operation := fmt.Sprintf("%s<%s,push %s", curStr, newStr, newStr)
+        fmt.Printf(width, *stack, input.Reverse(), operation)
+      }
+    }
   }
 
   return true, nil
@@ -150,13 +186,13 @@ func main() {
 
   /* 输入语句 */
   var (
-    input string
+    input      string
     inputStack Stack
-    stack Stack
+    stack      Stack
   )
   fmt.Println("\n输入语句, 以#结束:")
   fmt.Scanln(&input)
-  if input[len(input) - 1:] != "#" {
+  if input[len(input)-1:] != "#" {
     fmt.Println("unvalid input")
   } else {
     for i := len(input) - 1; i >= 0; i-- {
@@ -164,6 +200,15 @@ func main() {
     }
     stack.Push("#")
 
-    analysis(&stack, &inputStack)
+    result, err := analysis(&stack, &inputStack)
+    if err != nil {
+      fmt.Println(err)
+    } else {
+      if result {
+        fmt.Println("归约分析成功")
+      } else {
+        fmt.Println("归约分析失败")
+      }
+    }
   }
 }

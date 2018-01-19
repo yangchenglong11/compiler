@@ -48,13 +48,15 @@ func (stack *Stack) Replace(start, end int, substring string) {
   )
   buf.WriteString(string(theStack[:start]))
   buf.WriteString(substring)
-  buf.WriteString(string(theStack[end+1:]))
+  if end < stack.Len()-1 {
+    buf.WriteString(string(theStack[end+1:]))
+  }
   *stack = Stack(buf.String())
 }
 
 func (stack Stack) Reverse() string {
   var result Stack
-  for i := stack.Len(); i > 0 ; i-- {
+  for i := stack.Len(); i > 0; i-- {
     result.Push(stack.Pop())
   }
 
