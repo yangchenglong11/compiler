@@ -120,8 +120,12 @@ func analysis(stack, input *Stack) (bool, error) {
               fmt.Printf(width, *stack, *input, operation)
               k = j + 1
             } else if relation == Equal {
-              if input.Left() == "#" && string(*stack) == "#N" {
-                return true, nil
+              if string(*stack) == "#N" {
+                if input.Left() == "#" {
+                  return true, nil
+                } else {
+                  break
+                }
               }
               q = p
               if j > 0 && isContrainAny(Vt, stack.Index(j-1)) {
@@ -197,7 +201,7 @@ func main() {
     inputStack Stack
     stack      Stack
   )
-  fmt.Println("\n输入语句, 以#结束:")
+  fmt.Println("\n输入语句, 以#结束, 例如 i+i*i# :")
   fmt.Scanln(&input)
   if input[len(input)-1:] != "#" || !checkInput(Vt, input) {
     fmt.Println("unvalid input")

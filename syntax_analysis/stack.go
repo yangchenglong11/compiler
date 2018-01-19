@@ -71,15 +71,6 @@ func (stack *Stack) Replace(start, end int, substring string) {
   *stack = Stack(buf.String())
 }
 
-func (stack Stack) Reverse() string {
-  var result Stack
-  for i := stack.Len(); i > 0; i-- {
-    result.Push(stack.Pop())
-  }
-
-  return string(result)
-}
-
 func (stack Stack) Index(index int) string {
   return string(string(stack)[index])
 }
