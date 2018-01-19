@@ -77,18 +77,17 @@ var (
     {Above, Above, Above, "", "", Above, Above},
     {Below, Below, Below, Below, Below, "", Equal},
   }
-  Vt = [7]string{"+", "*", "↑", "i", "(", ")", "#"} // 终结符集
-  Vn = [4]string{"E", "T", "F", "P"} // 非终结符
+  Vt = []string{"+", "*", "↑", "i", "(", ")", "#"} // 终结符集
+  Vn = []string{"E", "T", "F", "P"} // 非终结符
 )
 
-func reverse(array Stack) Stack {
-  var result Stack
-  newArray := &array
-  for i := newArray.Len(); i > 0 ; i-- {
-    result.Push(newArray.Pop())
+func isContrainAny(slice []string, string string) bool {
+  for i := range slice {
+    if slice[i] == string {
+      return true
+    }
   }
-
-  return result
+  return false
 }
 
 func getRelation(a, b string) (string, error) { // 获取 a 与 b 的关系
@@ -114,21 +113,22 @@ func getRelation(a, b string) (string, error) { // 获取 a 与 b 的关系
 func analysis(stack, input *Stack) (bool, error) {
   l := len(*input) + 2
   width := fmt.Sprintf("%%-%ds%%%ds%%16s\n", l, l)
-  fmt.Printf(fmt.Sprintf("%%-%ds%%%ds%%15s\n", l - 1, l - 2), "栈", "输入流", "操作")
-  fmt.Printf(width, *stack, reverse(*input), "initial")
+  fmt.Printf(fmt.Sprintf("%%-%ds%%%ds%%12s\n", l - 2, l - 2), "栈", "输入流", "操作")
+  fmt.Printf(width, *stack, input.Reverse(), "initial")
   for input.Top() != "#" {
     newStr := input.Pop()
     curStr := stack.Top()
-    relation, err := getRelation(curStr, newStr)
-    if err != nil {
-      return false, err
-    } else {
-      if relation == Below {
-        stack.Push(newStr)
-        operation := fmt.Sprintf("%s<%s,push %s", curStr, newStr, newStr)
-        fmt.Printf(width, *stack, reverse(*input), operation)
-      }
-    }
+    //relation, err := getRelation(curStr, newStr)
+    //if err != nil {
+    //  return false, err
+    //} else {
+    //  if relation == Below {
+    //    stack.Push(newStr)
+    //    operation := fmt.Sprintf("%s<%s,push %s", curStr, newStr, newStr)
+    //    fmt.Printf(width, *stack, reverse(*input), operation)
+    //  }
+    //}
+    
   }
 
   return true, nil

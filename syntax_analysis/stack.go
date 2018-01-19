@@ -25,7 +25,7 @@ func (stack *Stack) Push(value string) {
 }
 
 func (stack Stack) Top() string {
-  if len(stack) == 0 {
+  if stack.IsEmpty() {
     return ""
   }
   return string(stack[len(stack)-1])
@@ -33,7 +33,7 @@ func (stack Stack) Top() string {
 
 func (stack *Stack) Pop() string {
   theStack := *stack
-  if len(theStack) == 0 {
+  if theStack.IsEmpty() {
     return ""
   }
   value := theStack[len(theStack)-1]
@@ -41,3 +41,26 @@ func (stack *Stack) Pop() string {
   return string(value)
 }
 
+func (stack *Stack) Replace(start, end int, substring string) {
+  var (
+    buf      bytes.Buffer
+    theStack = *stack
+  )
+  buf.WriteString(string(theStack[:start]))
+  buf.WriteString(substring)
+  buf.WriteString(string(theStack[end+1:]))
+  *stack = Stack(buf.String())
+}
+
+func (stack Stack) Reverse() string {
+  var result Stack
+  for i := stack.Len(); i > 0 ; i-- {
+    result.Push(stack.Pop())
+  }
+
+  return string(result)
+}
+
+func (stack Stack) Index(index int) string {
+  return string(string(stack)[index])
+}
