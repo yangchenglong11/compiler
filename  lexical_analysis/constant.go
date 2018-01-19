@@ -45,6 +45,15 @@ const (
 
 	Space   = 0x20
 	NewLine = '\n'
+
+	ErrIdentifier = 1
+	DesIdentifier = "A number at the beginning of a identifier."
+
+	ErrManyPoint = 2
+	DesManyPoint = "There is more than one point in the real."
+
+	ErrReal = 3
+	DesReal = "The decimal part of the real number appears in letters"
 )
 
 var MachineCode = map[string]int{"and": 1, "begin": 2, "bool": 3, "do": 4, "else": 5, "end": 6, "false": 7,
@@ -93,6 +102,6 @@ func (s Symbles) String() {
 	}
 }
 
-var rows = 0
+var rows = 1
 
 var LexicalErrors []LexicalError
