@@ -30,7 +30,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -51,13 +50,13 @@ func what(a byte) int {
 	}
 }
 
-func GetContent(path string) (*bytes.Buffer, error) {
+func GetContent(path string) (*Buffer, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	c, _ := ioutil.ReadAll(f)
-	return bytes.NewBuffer(c), nil
+	return NewBuffer(c), nil
 }
 
 func LexicalAnalysis(path string) (*Tokens, *Symbles, error) {
@@ -82,15 +81,31 @@ func LexicalAnalysis(path string) (*Tokens, *Symbles, error) {
 			if err != nil {
 				return nil, nil, err
 			}
+			if t == MachineCode[Integer] {
+				s := Symble{
+					Number: len(symble.S) + 1,
+					Kind:   t,
+					Name:   fmt.Sprintf("%d", int(num)),
+				}
+				symble.S = append(symble.S, s)
+				to := Token{
+					Label: len(token.T),
+					Name:  fmt.Sprintf("%d", int(num)),
+					Code:  t,
+					Addr:  len(symble.S),
+				}
+				token.T = append(token.T, to)
+				continue
+			}
 			s := Symble{
 				Number: len(symble.S) + 1,
 				Kind:   t,
-				Name:   fmt.Sprintf("%s", num),
+				Name:   fmt.Sprintf("%f", num),
 			}
 			symble.S = append(symble.S, s)
 			to := Token{
 				Label: len(token.T),
-				Name:  fmt.Sprintf("%s", num),
+				Name:  fmt.Sprintf("%f", num),
 				Code:  t,
 				Addr:  len(symble.S),
 			}
@@ -143,7 +158,7 @@ func LexicalAnalysis(path string) (*Tokens, *Symbles, error) {
 	return nil, nil, err
 }
 
-func CheckByte(f *bytes.Buffer) (byte, error) {
+func CheckByte(f *Buffer) (byte, error) {
 	cSubTemp, err := f.ReadByte()
 	if err != nil {
 		if err == io.EOF {
@@ -154,8 +169,11 @@ func CheckByte(f *bytes.Buffer) (byte, error) {
 
 	t := what(cSubTemp)
 	if t <= Letter {
-		fmt.Println("check", string(cSubTemp))
 		return cSubTemp, nil
+	}
+
+	if cSubTemp == '\n' {
+		return '$',nil
 	}
 
 	if cSubTemp == NewLine {
@@ -210,11 +228,10 @@ func CheckByte(f *bytes.Buffer) (byte, error) {
 			f.UnreadByte()
 		}
 	}
-	fmt.Println("check", string(cSubTemp))
 	return cSubTemp, nil
 }
 
-func handleNumber(b byte, buf *bytes.Buffer) (int, float64, error) {
+func handleNumber(b byte, buf *Buffer) (int, float64, error) {
 	var (
 		temp = b
 		num  = float64(int(temp) - 48)
@@ -242,9 +259,10 @@ func handleNumber(b byte, buf *bytes.Buffer) (int, float64, error) {
 				}
 				return 0, 0, err
 			}
+
 			// calculate num
 			for i := 0; what(temp) == 0; i++ {
-				num = num + float64(int(temp)-48)/(math.Pow10(i))
+				num = num + float64(int(temp)-48)/(math.Pow10(i+1))
 				temp, err = CheckByte(buf)
 				if err != nil {
 					if err == io.EOF {
@@ -258,6 +276,9 @@ func handleNumber(b byte, buf *bytes.Buffer) (int, float64, error) {
 		}
 	}
 
+	if temp == Space || temp == '$' {
+		goto finish
+	}
 	// is a Integer
 	for what(temp) == 0 {
 		num = num*10 + float64(int(temp)-48)
@@ -277,7 +298,7 @@ finish:
 	return MachineCode[Integer], num, nil
 }
 
-func handleLetter(b byte, buf *bytes.Buffer) (int, string, error) {
+func handleLetter(b byte, buf *Buffer) (int, string, error) {
 	var (
 		temp []byte
 		err  error
@@ -286,6 +307,10 @@ func handleLetter(b byte, buf *bytes.Buffer) (int, string, error) {
 
 	if buf.Len() >= 1 {
 		b, _ = CheckByte(buf)
+		if what(b) != Letter {
+			buf.UnreadByte()
+			goto finish
+		}
 		temp = append(temp, b)
 		switch string(temp) {
 		case "do","if","or":
@@ -300,6 +325,10 @@ func handleLetter(b byte, buf *bytes.Buffer) (int, string, error) {
 	if buf.Len() >= 2 {
 		for i := 0; i < 2; i++ {
 			b, _ := CheckByte(buf)
+			if what(b) != Letter {
+				buf.UnreadByte()
+				goto finish
+			}
 			temp = append(temp, b)
 		}
 		switch string(temp) {
@@ -317,9 +346,12 @@ func handleLetter(b byte, buf *bytes.Buffer) (int, string, error) {
 	if buf.Len() >= 3 {
 		for i := 0; i < 3; i++ {
 			b, _ := CheckByte(buf)
+			if what(b) != Letter {
+				buf.UnreadByte()
+				goto finish
+			}
 			temp = append(temp, b)
 		}
-		fmt.Println("555",string(temp))
 		switch string(temp) {
 		case "true","bool","else","real","then":
 			return MachineCode[string(temp)], string(temp), nil
@@ -329,16 +361,18 @@ func handleLetter(b byte, buf *bytes.Buffer) (int, string, error) {
 				buf.UnreadByte()
 			}
 		}
-		fmt.Println("666",string(temp))
 	}
 
 
 	if buf.Len() >= 4 {
 		for i := 0; i < 4; i++ {
 			b, _ := CheckByte(buf)
+			if what(b) != Letter {
+				buf.UnreadByte()
+				goto finish
+			}
 			temp = append(temp, b)
 		}
-		fmt.Println("1",string(temp))
 		switch string(temp) {
 		case "false","begin","while":
 			return MachineCode[string(temp)], string(temp), nil
@@ -348,16 +382,18 @@ func handleLetter(b byte, buf *bytes.Buffer) (int, string, error) {
 			}
 			temp = temp[:len(temp)-4]
 		}
-		fmt.Println("2",string(temp))
 	}
 
 
 	if buf.Len() >= 6 {
 		for i := 0; i < 6; i++ {
 			b, _ := CheckByte(buf)
+			if what(b) != Letter {
+				buf.UnreadByte()
+				goto finish
+			}
 			temp = append(temp, b)
 		}
-		fmt.Println("3",string(temp))
 		switch string(temp) {
 		case "program","integer":
 			return MachineCode[string(temp)], string(temp), nil
@@ -367,7 +403,6 @@ func handleLetter(b byte, buf *bytes.Buffer) (int, string, error) {
 			}
 			temp = temp[:len(temp)-6]
 		}
-		fmt.Println("4",string(temp))
 	}
 
 	b, err = CheckByte(buf)
@@ -377,6 +412,11 @@ func handleLetter(b byte, buf *bytes.Buffer) (int, string, error) {
 		}
 		return 0, "", err
 	}
+	if b == '$' {
+		return MachineCode[Identifier], string(temp), nil
+	}
+	temp = append(temp, b)
+
 	for what(b) == Letter {
 		temp = append(temp, b)
 		b, err = CheckByte(buf)
@@ -389,34 +429,34 @@ func handleLetter(b byte, buf *bytes.Buffer) (int, string, error) {
 	}
 	buf.UnreadByte()
 	temp = temp[:len(temp)-1]
-
+finish:
 	return MachineCode[Identifier], string(temp), nil
 }
 
-func handlerOther(b byte, buf *bytes.Buffer) (int, string, error) {
+func handlerOther(b byte, buf *Buffer) (int, string, error) {
 	var (
 		temp []byte
 	)
 	temp = append(temp, b)
-	if isSpace(b) {
+	if isSpace(b) || b == '$' {
 		return MachineCode[""], "", nil
 	}
 
 	if buf.Len() >= 0 {
 		switch string(temp) {
 		case "<","+",">","=",";",":",")","(",",",".","/","*","-":
-			return MachineCode[string(temp)], string(temp), nil
-		default:
-			return MachineCode["err"], "#", nil
-		}
-	}
+			if buf.Len() >= 1 {
+				b, _ = CheckByte(buf)
+				temp = append(temp, b)
+				switch string(temp) {
+				case ":=",">=","<>","<=":
+					return MachineCode[string(temp)], string(temp), nil
+				default:
+					buf.UnreadByte()
+					temp = temp[:len(temp)-1]
+				}
+			}
 
-	if buf.Len() >= 1 {
-		b, _ = CheckByte(buf)
-		temp = append(temp, b)
-		fmt.Println("dsada",string(temp))
-		switch string(temp) {
-		case ":=",">=","<>","<=":
 			return MachineCode[string(temp)], string(temp), nil
 		default:
 			return MachineCode["err"], "#", nil
@@ -439,6 +479,7 @@ func main() {
 	if t != nil {
 		t.String()
 	}
+	fmt.Println()
 	if s != nil {
 		s.String()
 	}
