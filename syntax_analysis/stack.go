@@ -41,6 +41,23 @@ func (stack *Stack) Pop() string {
   return string(value)
 }
 
+func (stack Stack) Left() string {
+  if stack.IsEmpty() {
+    return ""
+  }
+  return stack.Index(0)
+}
+
+func (stack *Stack) Shift() string {
+  theStack := *stack
+  if theStack.IsEmpty() {
+    return ""
+  }
+  value := theStack[0:1]
+  *stack = theStack[1:]
+  return string(value)
+}
+
 func (stack *Stack) Replace(start, end int, substring string) {
   var (
     buf      bytes.Buffer

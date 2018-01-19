@@ -3,71 +3,24 @@
  *     Initial: 2018/01/17        Wang RiYu
  */
 
-/* L语言文法定义
-程序定义:
-<main> -> program <ID> <Body>
-<Body> -> <VarIntro> <Begin>
-
-变量定义:
-<VarIntro> -> var <VarDef> | ε
-<VarDef> -> <IDTable>: <Type> | <IDTable>: <Type>; <VarDef>
-<IDTable> -> <ID>, <IDTable> | <ID>
-
-语句定义：
-<Begin> -> begin <Sentence> end
-<Sentence> -> <Execute>; <Sentence> | <Execute>
-<Execute> -> <SimpleSt> | <StructSt>
-<SimpleSt> -> <Assignment>
-<Assignment> -> <Variable>:=<Expression>
-<Variable> -> <ID>
-<StructSt> -> <Begin> | <IfSt> | <WhileSt>
-<IfSt> -> if <BoolExpress> then <Execute> | if <BoolExpress> then <Execute> else <Execute>
-<WhileSt> -> while <BoolExpress> do <Execute>
-
-表达式定义:
-<Expression> -> <ArithmeticExp> | <BoolExpress>
-<ArithmeticExp> -> <ArithmeticExp> + <Item> | <ArithmeticExp> - <Item> | <Item>
-<Item> -> <Item> * <Factor> | <Item> / <Factor> | <Factor>
-<Factor> -> <ArithmeticNum> | (<ArithmeticExp>)
-<ArithmeticNum> -> <ID> | <Integer> | <Real>
-<BoolExpress> -> <BoolExpress> or <BoolItem> | <BoolItem>
-<BoolItem> -> <BoolItem> and <BoolFactor> | <BoolFactor>
-<BoolFactor> -> not <BoolFactor> | <BoolValue>
-<BoolValue> -> <BoolConstant> | <ID> | (<BoolExpress>) | <RelationExpress>
-<RalationExpress> -> <ID> <Rop> <ID>
-<Rop> -> < | <= | = | > | >= | <>
-
-类型定义:
-<Type> -> integer | bool | real
-
-单词定义:
-<ID> -> <Letter> | <ID> <Letter> | <ID> <Number>
-<Integer> -> <Number> | <Integer> <Number>
-<Real> -> <Integer> | <Real> <Number>
-<BoolValue> -> true | false
-
-字符定义:
-<Letter> -> A│B│C│D│E│F│G│H│I│J│K│L│M│N│O│P│Q│R│S│T│U│V│W│X│Y│Z│a│b│c│d│e│f│g│h│i│j│k│l│m│n│o│p│q│r│s│t│u│v│w│x│y│z
-<Number> -> 0│1│2│3│4│5│6│7│8│9
-*/
-
-/*
-E -> E + T | T
-T -> T * F | F
-F -> P ↑ F | P
-P -> (E) | i
-*/
 package main
 
 import (
   "fmt"
   "errors"
+  "strings"
 )
 
 var (
   Above    = ">"
   Below    = "<"
   Equal    = "="
+  /* 文法
+    E -> E + T | T
+    T -> T * F | F
+    F -> P ↑ F | P
+    P -> (E) | i
+  */
   relation = [7][7]string{// 算符优先关系，-1代表小于，1代表大于，0代表等于
     {Above, Below, Below, Below, Below, Above, Above},
     {Above, Above, Below, Below, Below, Above, Above},
@@ -112,62 +65,103 @@ func getRelation(a, b string) (string, error) { // 获取 a 与 b 的关系
 
 func analysis(stack, input *Stack) (bool, error) {
   l := len(*input) + 2
-  width := fmt.Sprintf("%%-%ds%%%ds%%16s\n", l, l)
-  fmt.Printf(fmt.Sprintf("%%-%ds%%%ds%%12s\n", l-2, l-2), "栈", "输入流", "操作")
-  fmt.Printf(width, *stack, input.Reverse(), "initial")
+  width := fmt.Sprintf("%%-%ds%%%ds%%20s\n", l, l)
+  fmt.Printf(fmt.Sprintf("%%-%ds%%%ds%%16s\n", l-2, l-2), "栈", "输入流", "操作")
+  fmt.Printf(width, *stack, *input, "initial")
   var k = 0
-  for input.Top() != "#" {
-    newStr := input.Top()
+  for input.Left() != "#" || string(*stack) != "#N" {
+    newStr := input.Left()
     curStr := stack.Top()
-    fmt.Println("a1", newStr, curStr)
+     fmt.Println("栈顶元素与输入元素", curStr, newStr)
 
     j := k
     if !isContrainAny(Vt, curStr) {
       j = k - 1
     }
+     fmt.Println("j k 下标", j, k)
 
     for {
-      if relation, err := getRelation(stack.Index(j), newStr); err == nil && relation == Above {
-        q := stack.Index(j)
-        if isContrainAny(Vt, stack.Index(j-1)) {
+      curStr = stack.Index(j)
+      if relation, err := getRelation(curStr, newStr); err == nil && relation == Above {
+        q := curStr
+         fmt.Println("当前元素q", q)
+        if j > 0 && isContrainAny(Vt, stack.Index(j-1)) {
           j--
-        } else {
+        } else if j > 1 && !isContrainAny(Vt, stack.Index(j-1)) {
           j -= 2
         }
         for {
-          if relation, err := getRelation(stack.Index(j), q); err == nil && relation == Below {
-            q = stack.Index(j)
-            if isContrainAny(Vt, stack.Index(j-1)) {
-              j--
-            } else {
-              j -= 2
+          p := stack.Index(j)
+          if relation, err := getRelation(p, q); err == nil && relation == Below {
+             fmt.Println("栈内终结符比较", p, relation, q)
+            if strings.IndexAny(string(*stack), q) - strings.IndexAny(string(*stack), p) == 1 {
+              operation := fmt.Sprintf("%s<%s>%s,replace %s", p, q, newStr, string(*stack)[j+1:])
+              stack.Replace(j+1, k+1, "N")
+              fmt.Printf(width, *stack, *input, operation)
+              k = j + 1
+              break
             }
-            operation := fmt.Sprintf("%s<%s>%s,replace %s", stack.Index(j), stack.Index(k), newStr, string(*stack)[j+1:k+1])
+            q = stack.Index(j)
+            if j > 0 && isContrainAny(Vt, stack.Index(j-1)) {
+              if j - 1 > 0 {
+                j--
+              }
+            } else if j > 1 && !isContrainAny(Vt, stack.Index(j-1)) {
+              if j - 2 > 0 {
+                j -= 2
+              }
+            }
+             fmt.Println("下标q j k", q, j, k)
+             fmt.Println("当前栈", *stack, j, k)
+            operation := fmt.Sprintf("%s<%s>%s,replace %s", p, curStr, newStr, string(*stack)[j+1:])
             stack.Replace(j+1, k+1, "N")
-            fmt.Printf(width, *stack, input.Reverse(), operation)
-            k++
+            fmt.Printf(width, *stack, *input, operation)
+            k = j + 1
           } else if err != nil {
             return false, err
+          } else if relation != Below {
+            break
           }
         }
       } else if err != nil {
         return false, err
+      } else if relation != Above {
+        break
       }
     }
 
+    if input.Left() == "#" && string(*stack) == "#N" {
+      return true, nil
+    }
+
     relation, err := getRelation(stack.Index(j), newStr)
+     fmt.Println("栈顶终结符比较", stack.Index(j), relation, newStr)
     if err != nil {
       return false, err
     } else {
       if relation == Below || relation == Equal {
-        stack.Push(input.Pop())
-        operation := fmt.Sprintf("%s<%s,push %s", curStr, newStr, newStr)
-        fmt.Printf(width, *stack, input.Reverse(), operation)
+        stack.Push(input.Shift())
+        operation := fmt.Sprintf("%s<%s,push %s", stack.Index(j), newStr, newStr)
+        fmt.Printf(width, *stack, *input, operation)
+        k++
+      } else {
+        return false, err
       }
     }
   }
 
+   fmt.Println("end", *stack, *input)
   return true, nil
+}
+
+func checkInput(valid []string, input string) bool {
+  split := strings.Split(input, "")
+  for i := range split {
+    if !isContrainAny(valid, split[i]) {
+      return false
+    }
+  }
+  return true
 }
 
 func main() {
@@ -192,12 +186,12 @@ func main() {
   )
   fmt.Println("\n输入语句, 以#结束:")
   fmt.Scanln(&input)
-  if input[len(input)-1:] != "#" {
+  if input[len(input)-1:] != "#" || !checkInput(Vt, input) {
     fmt.Println("unvalid input")
   } else {
-    for i := len(input) - 1; i >= 0; i-- {
-      inputStack.Push(string(input[i]))
-    }
+    //for i := len(input) - 1; i >= 0; i-- {
+      inputStack.Push(input)
+    //}
     stack.Push("#")
 
     result, err := analysis(&stack, &inputStack)
