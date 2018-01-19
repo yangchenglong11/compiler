@@ -1,1 +1,4 @@
-.idea/*
+.idea
+*.xml
+.idea/markdown-navigator.xml
+.idea/vcs.xml
