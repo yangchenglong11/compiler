@@ -5,9 +5,12 @@
 
 package main
 
-import "bytes"
+import (
+  "bytes"
+  "fmt"
+)
 
-type Stack string
+type Stack []rune
 
 func (stack Stack) Len() int {
   return len(stack)
@@ -28,7 +31,7 @@ func (stack Stack) Top() string {
   if stack.IsEmpty() {
     return ""
   }
-  return string(stack[len(stack)-1])
+  return string(stack[stack.Len()-1])
 }
 
 func (stack *Stack) Pop() string {
@@ -36,8 +39,8 @@ func (stack *Stack) Pop() string {
   if theStack.IsEmpty() {
     return ""
   }
-  value := theStack[len(theStack)-1]
-  *stack = theStack[:len(theStack)-1]
+  value := theStack[stack.Len()-1]
+  *stack = theStack[:stack.Len()-1]
   return string(value)
 }
 
@@ -58,7 +61,15 @@ func (stack *Stack) Shift() string {
   return string(value)
 }
 
+func (stack *Stack) ToString() string {
+  return string(*stack)
+}
+
 func (stack *Stack) Replace(start, end int, substring string) {
+  if start > end || start < 0 || end < 0 {
+    fmt.Println("unvalid params")
+    return
+  }
   var (
     buf      bytes.Buffer
     theStack = *stack
@@ -72,5 +83,5 @@ func (stack *Stack) Replace(start, end int, substring string) {
 }
 
 func (stack Stack) Index(index int) string {
-  return string(string(stack)[index])
+  return string(stack[index])
 }

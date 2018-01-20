@@ -12,9 +12,9 @@ import (
 )
 
 var (
-  Above    = ">"
-  Below    = "<"
-  Equal    = "="
+  Above = ">"
+  Below = "<"
+  Equal = "="
   /* 文法
     E -> E + T | T
     T -> T * F | F
@@ -64,12 +64,12 @@ func getRelation(a, b string) (string, error) { // 获取 a 与 b 的关系
 }
 
 func analysis(stack, input *Stack) (bool, error) {
-  l := len(*input) + 2
+  l := input.Len() + 2
   width := fmt.Sprintf("%%-%ds%%%ds%%20s\n", l, l)
   fmt.Printf(fmt.Sprintf("%%-%ds%%%ds%%16s\n", l-2, l-2), "栈", "输入流", "操作")
-  fmt.Printf(width, *stack, *input, "initial")
+  fmt.Printf(width, stack.ToString(), input.ToString(), "initial")
   var k = 0
-  for input.Left() != "#" || string(*stack) != "#N" {
+  for input.Left() != "#" || stack.ToString() != "#N" {
     newStr := input.Left()
     curStr := stack.Top()
     //fmt.Println("栈顶元素与输入元素", curStr, newStr)
@@ -96,36 +96,39 @@ func analysis(stack, input *Stack) (bool, error) {
           if relation, err := getRelation(p, q); err == nil {
             if relation == Below {
               //fmt.Println("栈内终结符比较", p, relation, q)
-              if strings.IndexAny(string(*stack), q) - strings.IndexAny(string(*stack), p) == 1 {
-                operation := fmt.Sprintf("%s<%s>%s,replace %s", p, q, newStr, string(*stack)[j+1:])
+              if index := strings.IndexAny(stack.ToString(), q) - strings.IndexAny(stack.ToString(), p); index == 1 || index == 0 {
+                operation := fmt.Sprintf("%s<%s>%s,replace %s", p, q, newStr, string(Stack(*stack)[j+1:]))
                 stack.Replace(j+1, k+1, "N")
-                fmt.Printf(width, *stack, *input, operation)
+                fmt.Printf(width, stack.ToString(), input.ToString(), operation)
                 k = j + 1
                 break
               }
               q = p
               if j > 0 && isContrainAny(Vt, stack.Index(j-1)) {
-                if j - 1 > 0 {
+                if j-1 > 0 {
                   j--
                 }
               } else if j > 1 && !isContrainAny(Vt, stack.Index(j-1)) {
-                if j - 2 > 0 {
+                if j-2 > 0 {
                   j -= 2
                 }
               }
               //fmt.Println("下标q j k", q, j, k)
-              //fmt.Println("当前栈", *stack, j, k)
+              //fmt.Println("当前栈", stack.ToString(), j, k)
               operation := fmt.Sprintf("%s<%s>%s,replace %s", p, curStr, newStr, string(*stack)[j+1:])
               stack.Replace(j+1, k+1, "N")
-              fmt.Printf(width, *stack, *input, operation)
+              fmt.Printf(width, stack.ToString(), input.ToString(), operation)
               k = j + 1
             } else if relation == Equal {
-              if string(*stack) == "#N" {
+              if stack.ToString() == "#N" {
                 if input.Left() == "#" {
                   return true, nil
                 } else {
                   break
                 }
+              }
+              if strings.IndexAny(stack.ToString(), q) == strings.IndexAny(stack.ToString(), p) {
+                break
               }
               q = p
               if j > 0 && isContrainAny(Vt, stack.Index(j-1)) {
@@ -147,7 +150,7 @@ func analysis(stack, input *Stack) (bool, error) {
       }
     }
 
-    if input.Left() == "#" && string(*stack) == "#N" {
+    if input.Left() == "#" && stack.ToString() == "#N" {
       return true, nil
     }
 
@@ -159,7 +162,7 @@ func analysis(stack, input *Stack) (bool, error) {
       if relation == Below || relation == Equal {
         stack.Push(input.Shift())
         operation := fmt.Sprintf("%s<%s,push %s", stack.Index(j), newStr, newStr)
-        fmt.Printf(width, *stack, *input, operation)
+        fmt.Printf(width, stack.ToString(), input.ToString(), operation)
         k++
       } else {
         return false, err
@@ -167,7 +170,7 @@ func analysis(stack, input *Stack) (bool, error) {
     }
   }
 
-  //fmt.Println("end", *stack, *input)
+  fmt.Println("end", stack.ToString(), input.ToString())
   return true, nil
 }
 
@@ -206,9 +209,7 @@ func main() {
   if input[len(input)-1:] != "#" || !checkInput(Vt, input) {
     fmt.Println("unvalid input")
   } else {
-    //for i := len(input) - 1; i >= 0; i-- {
-      inputStack.Push(input)
-    //}
+    inputStack.Push(input)
     stack.Push("#")
 
     result, err := analysis(&stack, &inputStack)
