@@ -9,6 +9,8 @@ import (
   "fmt"
   "errors"
   "strings"
+  "os"
+  "bufio"
 )
 
 var (
@@ -80,104 +82,59 @@ func analysis(stack, input *Stack) (bool, error) {
     }
     //fmt.Println("j k 下标", j, k)
 
-    for {
-      curStr = stack.Index(j)
-      if relation, err := getRelation(curStr, newStr); err == nil && relation == Above {
-        q := curStr
-        //fmt.Println("当前元素q", q)
-        if j > 0 && isContrainAny(Vt, stack.Index(j-1)) {
-          j--
-        } else if j > 1 && !isContrainAny(Vt, stack.Index(j-1)) {
-          j -= 2
-        }
-        for {
-          p := stack.Index(j)
-          //fmt.Println("当前元素pq", p, q)
-          if relation, err := getRelation(p, q); err == nil {
-            if relation == Below {
-              //fmt.Println("栈内终结符比较", p, relation, q)
-              if index := strings.IndexAny(stack.ToString(), q) - strings.IndexAny(stack.ToString(), p); index == 1 || index == 0 {
-                operation := fmt.Sprintf("%s<%s>%s,replace %s", p, q, newStr, string(Stack(*stack)[j+1:]))
-                stack.Replace(j+1, k+1, "N")
-                fmt.Printf(width, stack.ToString(), input.ToString(), operation)
-                k = j + 1
-                break
-              }
-              q = p
-              if j > 0 && isContrainAny(Vt, stack.Index(j-1)) {
-                if j-1 > 0 {
-                  j--
-                }
-              } else if j > 1 && !isContrainAny(Vt, stack.Index(j-1)) {
-                if j-2 > 0 {
-                  j -= 2
-                }
-              }
-              //fmt.Println("下标q j k", q, j, k)
-              //fmt.Println("当前栈", stack.ToString(), j, k)
-              operation := fmt.Sprintf("%s<%s>%s,replace %s", p, curStr, newStr, string(*stack)[j+1:])
-              stack.Replace(j+1, k+1, "N")
-              fmt.Printf(width, stack.ToString(), input.ToString(), operation)
-              k = j + 1
-            } else if relation == Equal {
-              if stack.ToString() == "#N" {
-                if input.Left() == "#" {
-                  return true, nil
-                } else {
-                  break
-                }
-              }
-              if strings.IndexAny(stack.ToString(), q) == strings.IndexAny(stack.ToString(), p) {
-                break
-              }
-              q = p
-              if j > 0 && isContrainAny(Vt, stack.Index(j-1)) {
-                j--
-              } else if j > 1 && !isContrainAny(Vt, stack.Index(j-1)) {
-                j -= 2
-              }
-            } else {
-              break
-            }
-          } else {
-            return false, err
-          }
-        }
-      } else if err != nil {
-        return false, err
-      } else if relation != Above {
-        break
-      }
-    }
-
-    if input.Left() == "#" && stack.ToString() == "#N" {
-      return true, nil
-    }
-
-    relation, err := getRelation(stack.Index(j), newStr)
-    //fmt.Println("栈顶终结符比较", stack.Index(j), relation, newStr)
+    curStr = stack.Index(j)
+    relation, err := getRelation(curStr, newStr)
+    //fmt.Println("栈顶终结符比较", curStr, relation, newStr)
     if err != nil {
       return false, err
     } else {
       if relation == Below || relation == Equal {
         stack.Push(input.Shift())
-        operation := fmt.Sprintf("%s<%s,push %s", stack.Index(j), newStr, newStr)
+        operation := fmt.Sprintf("%s<%s,push %s", curStr, newStr, newStr)
         fmt.Printf(width, stack.ToString(), input.ToString(), operation)
         k++
+      } else if relation == Above {
+        for {
+          q := curStr
+          if j > 0 && isContrainAny(Vt, stack.Index(j-1)) {
+            j--
+          } else if j > 1 && !isContrainAny(Vt, stack.Index(j-1)) {
+            j -= 2
+          }
+          p := stack.Index(j)
+          //fmt.Println("当前元素p q", p, q)
+          relation, err := getRelation(p, q)
+          if err != nil {
+            return false, err
+          } else {
+            if relation == Below {
+              //fmt.Println("下标p q j k", p, q, j, k)
+              //fmt.Println("当前栈", stack.ToString(), j, k)
+              operation := fmt.Sprintf("%s<%s>%s,replace %s", p, q, newStr, Stack(*stack)[j+1:k+1].ToString())
+              stack.Replace(j+1, k+1, "N")
+              fmt.Printf(width, stack.ToString(), input.ToString(), operation)
+              k = j + 1
+              break
+            } else if relation == Equal {
+              curStr = p
+            } else {
+              return false, err
+            }
+          }
+        }
       } else {
         return false, err
       }
     }
   }
 
-  fmt.Println("end", stack.ToString(), input.ToString())
+  //fmt.Println("end", stack.ToString(), input.ToString())
   return true, nil
 }
 
-func checkInput(valid []string, input string) bool {
-  split := strings.Split(input, "")
-  for i := range split {
-    if !isContrainAny(valid, split[i]) {
+func checkInput(valid, inputSlice []string) bool {
+  for i := range inputSlice {
+    if !isContrainAny(valid, inputSlice[i]) {
       return false
     }
   }
@@ -204,22 +161,32 @@ func main() {
     inputStack Stack
     stack      Stack
   )
-  fmt.Println("\n输入语句, 以#结束, 例如 i+i*i# :")
-  fmt.Scanln(&input)
-  if input[len(input)-1:] != "#" || !checkInput(Vt, input) {
-    fmt.Println("unvalid input")
+  fmt.Println("\n输入语句, 以#结束, 每个终结符以空格隔开, 例如 i + i * i #")
+  //fmt.Scanln(&input)
+  reader := bufio.NewReader(os.Stdin)
+  strBytes, _, err := reader.ReadLine()
+  if err != nil {
+    fmt.Println(err)
   } else {
-    inputStack.Push(input)
-    stack.Push("#")
-
-    result, err := analysis(&stack, &inputStack)
-    if err != nil {
-      fmt.Println(err)
+    input = string(strBytes)
+    split := strings.Split(input, " ")
+    if input[len(input)-1:] != "#" || !checkInput(Vt, split) {
+      fmt.Println("unvalid input")
     } else {
-      if result {
-        fmt.Println("归约分析成功")
+      for i := range split {
+        inputStack.Push(split[i])
+      }
+      stack.Push("#")
+
+      result, err := analysis(&stack, &inputStack)
+      if err != nil {
+        fmt.Println(err)
       } else {
-        fmt.Println("归约分析失败")
+        if result {
+          fmt.Println("归约分析成功")
+        } else {
+          fmt.Println("归约分析失败")
+        }
       }
     }
   }
