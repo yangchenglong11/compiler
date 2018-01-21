@@ -6,11 +6,11 @@
 package main
 
 import (
-  "bytes"
   "fmt"
+  "strings"
 )
 
-type Stack []rune
+type Stack []string
 
 func (stack Stack) Len() int {
   return len(stack)
@@ -20,11 +20,20 @@ func (stack Stack) IsEmpty() bool {
   return len(stack) == 0
 }
 
+func (stack Stack) ToString() string {
+  return strings.Join(stack, "")
+}
+
+func (stack *Stack) Index(index int) string {
+  if index < 0 || index > stack.Len() {
+    fmt.Println("out of range in stack")
+    return ""
+  }
+  return Stack(*stack)[index]
+}
+
 func (stack *Stack) Push(value string) {
-  var buf bytes.Buffer
-  buf.WriteString(string(*stack))
-  buf.WriteString(value)
-  *stack = Stack(buf.String())
+  *stack = append(*stack, value)
 }
 
 func (stack Stack) Top() string {
@@ -41,14 +50,14 @@ func (stack *Stack) Pop() string {
   }
   value := theStack[stack.Len()-1]
   *stack = theStack[:stack.Len()-1]
-  return string(value)
+  return value
 }
 
 func (stack Stack) Left() string {
   if stack.IsEmpty() {
     return ""
   }
-  return stack.Index(0)
+  return stack[0]
 }
 
 func (stack *Stack) Shift() string {
@@ -56,13 +65,9 @@ func (stack *Stack) Shift() string {
   if theStack.IsEmpty() {
     return ""
   }
-  value := theStack[0:1]
+  value := theStack[0]
   *stack = theStack[1:]
-  return string(value)
-}
-
-func (stack *Stack) ToString() string {
-  return string(*stack)
+  return value
 }
 
 func (stack *Stack) Replace(start, end int, substring string) {
@@ -70,18 +75,11 @@ func (stack *Stack) Replace(start, end int, substring string) {
     fmt.Println("unvalid params")
     return
   }
-  var (
-    buf      bytes.Buffer
-    theStack = *stack
-  )
-  buf.WriteString(string(theStack[:start]))
-  buf.WriteString(substring)
-  if end < stack.Len()-1 {
-    buf.WriteString(string(theStack[end+1:]))
-  }
-  *stack = Stack(buf.String())
-}
 
-func (stack Stack) Index(index int) string {
-  return string(stack[index])
+  var theStack = *stack
+  *stack = append([]string{}, theStack[:start]...)
+  *stack = append(*stack, substring)
+  if end < theStack.Len()-1 {
+    *stack = append(*stack, theStack[end+1:]...)
+  }
 }
