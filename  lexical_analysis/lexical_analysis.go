@@ -63,6 +63,8 @@ func LexicalAnalysis(path string) (*Tokens, *Symbles, error) {
 	var (
 		token  Tokens
 		symble Symbles
+		place int
+		exist bool
 	)
 	c, err := GetContent(path)
 	if err != nil {
@@ -83,6 +85,16 @@ func LexicalAnalysis(path string) (*Tokens, *Symbles, error) {
 				return nil, nil, err
 			}
 			if t == MachineCode[Integer] {
+				if place,exist = isExist(fmt.Sprintf("%d", int(num)),symble);exist {
+					to := Token{
+						Label: len(token.T),
+						Name:  fmt.Sprintf("%d", int(num)),
+						Code:  t,
+						Addr:  place,
+					}
+					token.T = append(token.T, to)
+					continue
+				}
 				s := Symble{
 					Number: len(symble.S) + 1,
 					Kind:   t,
@@ -94,6 +106,17 @@ func LexicalAnalysis(path string) (*Tokens, *Symbles, error) {
 					Name:  fmt.Sprintf("%d", int(num)),
 					Code:  t,
 					Addr:  len(symble.S),
+				}
+				token.T = append(token.T, to)
+				continue
+			}
+
+			if place,exist = isExist(fmt.Sprintf("%f", num),symble);exist {
+				to := Token{
+					Label: len(token.T),
+					Name:  fmt.Sprintf("%f", num),
+					Code:  t,
+					Addr:  place,
 				}
 				token.T = append(token.T, to)
 				continue
@@ -128,6 +151,16 @@ func LexicalAnalysis(path string) (*Tokens, *Symbles, error) {
 				continue
 			}
 
+			if place,exist = isExist(s,symble);exist {
+				to := Token{
+					Label: len(token.T),
+					Name:  s,
+					Code:  t,
+					Addr:  place,
+				}
+				token.T = append(token.T, to)
+				continue
+			}
 			sy := Symble{
 				Number: len(symble.S) + 1,
 				Kind:   t,
@@ -194,6 +227,10 @@ func CheckByte(f *Buffer) (byte, error) {
 				return 0x0, err
 			}
 		}
+
+		if cSubTemp == '\n' {
+			rows = rows - 1
+		}
 		f.UnreadByte()
 		return Space, nil
 	}
@@ -221,6 +258,9 @@ func CheckByte(f *Buffer) (byte, error) {
 			return NewLine, nil
 		} else {
 			//退回刚才读入的字符
+			if cSubTemp == '\n' {
+				rows = rows - 1
+			}
 			f.UnreadByte()
 		}
 	}
@@ -286,6 +326,9 @@ func handleNumber(b byte, buf *Buffer) (int, float64, error) {
 			}
 			LexicalErrors = append(LexicalErrors, num_err)
 		} else {
+			if t == '\n' {
+				rows = rows - 1
+			}
 			buf.UnreadByte()
 		}
 
@@ -361,10 +404,16 @@ func handleNumber(b byte, buf *Buffer) (int, float64, error) {
 				}
 				LexicalErrors = append(LexicalErrors, nu_err)
 			} else {
+				if temp == '\n' {
+					rows = rows - 1
+				}
 				buf.UnreadByte()
 			}
 		}
 
+		if temp == '\n' {
+			rows = rows - 1
+		}
 		buf.UnreadByte()
 		goto real
 	}
@@ -385,6 +434,9 @@ func handleLetter(b byte, buf *Buffer) (int, string, error) {
 	if buf.Len() >= 1 {
 		b, _ = CheckByte(buf)
 		if what(b) != Letter {
+			if b == '\n' {
+				rows = rows - 1
+			}
 			buf.UnreadByte()
 			goto finish
 		}
@@ -393,6 +445,9 @@ func handleLetter(b byte, buf *Buffer) (int, string, error) {
 		case "do", "if", "or":
 			return MachineCode[string(temp)], string(temp), nil
 		default:
+			if b == '\n' {
+				rows = rows - 1
+			}
 			buf.UnreadByte()
 			temp = temp[:len(temp)-1]
 		}
@@ -402,6 +457,9 @@ func handleLetter(b byte, buf *Buffer) (int, string, error) {
 		for i := 0; i < 2; i++ {
 			b, _ := CheckByte(buf)
 			if what(b) != Letter {
+				if b == '\n' {
+					rows = rows - 1
+				}
 				buf.UnreadByte()
 				goto finish
 			}
@@ -422,6 +480,9 @@ func handleLetter(b byte, buf *Buffer) (int, string, error) {
 		for i := 0; i < 3; i++ {
 			b, _ := CheckByte(buf)
 			if what(b) != Letter {
+				if b == '\n' {
+					rows = rows - 1
+				}
 				buf.UnreadByte()
 				goto finish
 			}
@@ -442,6 +503,9 @@ func handleLetter(b byte, buf *Buffer) (int, string, error) {
 		for i := 0; i < 4; i++ {
 			b, _ := CheckByte(buf)
 			if what(b) != Letter {
+				if b == '\n' {
+					rows = rows - 1
+				}
 				buf.UnreadByte()
 				goto finish
 			}
@@ -462,6 +526,9 @@ func handleLetter(b byte, buf *Buffer) (int, string, error) {
 		for i := 0; i < 6; i++ {
 			b, _ := CheckByte(buf)
 			if what(b) != Letter {
+				if b == '\n' {
+					rows = rows - 1
+				}
 				buf.UnreadByte()
 				goto finish
 			}
@@ -500,6 +567,9 @@ func handleLetter(b byte, buf *Buffer) (int, string, error) {
 			return 0, "", err
 		}
 	}
+	if b == '\n' {
+		rows = rows - 1
+	}
 	buf.UnreadByte()
 	temp = temp[:len(temp)-1]
 finish:
@@ -525,6 +595,9 @@ func handlerOther(b byte, buf *Buffer) (int, string, error) {
 				case ":=", ">=", "<>", "<=":
 					return MachineCode[string(temp)], string(temp), nil
 				default:
+					if b == '\n' {
+						rows = rows - 1
+					}
 					buf.UnreadByte()
 					temp = temp[:len(temp)-1]
 				}
@@ -561,4 +634,14 @@ func main() {
 		fmt.Printf("%+v", LexicalErrors[i])
 		fmt.Println()
 	}
+}
+
+func isExist(s string,a Symbles) (int,bool) {
+	for i := range a.S {
+		if s == a.S[i].Name {
+			return a.S[i].Number,true
+		}
+	}
+
+	return 0,false
 }

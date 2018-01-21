@@ -2,7 +2,7 @@ program
 begin
 i:=8.43.43
 m=3f45
-r=23.43h34
+m=8.43h34
 while (i>a) do
-  if (c<d) thenx := y+z
+  if (a<d) then d := i+m
 end
