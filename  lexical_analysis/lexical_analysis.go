@@ -213,7 +213,7 @@ func CheckByte(f *Buffer) (byte, error) {
 
 	if cSubTemp == '\n' {
 		rows = rows + 1
-		return '$', nil
+		return '\n', nil
 	}
 
 	//判断是否为空格,合并多个空格为一个
@@ -283,7 +283,7 @@ func handleNumber(b byte, buf *Buffer) (int, float64, error) {
 		return 0, 0, err
 	}
 
-	if temp == Space || temp == '$' {
+	if temp == Space || temp == '\n' {
 		goto finish
 	}
 
@@ -378,6 +378,7 @@ func handleNumber(b byte, buf *Buffer) (int, float64, error) {
 			}
 		}
 
+		// solve the bug as 3.34df23
 		if what(temp) == Letter {
 			temp, err = CheckByte(buf)
 			if err != nil {
@@ -413,11 +414,13 @@ func handleNumber(b byte, buf *Buffer) (int, float64, error) {
 
 		if temp == '\n' {
 			rows = rows - 1
+			goto real
 		}
 		buf.UnreadByte()
 		goto real
 	}
 
+	goto finish
 real:
 	return MachineCode[Real], num, nil
 finish:
@@ -552,7 +555,7 @@ func handleLetter(b byte, buf *Buffer) (int, string, error) {
 		}
 		return 0, "", err
 	}
-	if b == '$' {
+	if b == '\n' {
 		return MachineCode[Identifier], string(temp), nil
 	}
 	temp = append(temp, b)
@@ -581,7 +584,7 @@ func handlerOther(b byte, buf *Buffer) (int, string, error) {
 		temp []byte
 	)
 	temp = append(temp, b)
-	if isSpace(b) || b == '$' {
+	if isSpace(b) || b == '\n' {
 		return MachineCode[""], "", nil
 	}
 
