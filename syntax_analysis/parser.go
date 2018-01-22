@@ -30,9 +30,9 @@ func (parser *Parser) Init(grammar map[string]string, Vt, Vn []string, relationT
   parser.relationTable = relationTable
 }
 
-func (parser Parser) vtContrainsAny(string string) bool { // Vt 是否包含 string
+func (parser Parser) vtContrainsAny(str string) bool { // Vt 是否包含 str
   for i := range parser.Vt {
-    if parser.Vt[i] == string {
+    if parser.Vt[i] == str {
       return true
     }
   }

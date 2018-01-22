@@ -29,13 +29,13 @@ func TestParser(t *testing.T) {
       "i": "P",
     }
     relation = [][]string{
-      {Above, Below, Below, Below, Below, Above, Above},
-      {Above, Above, Below, Below, Below, Above, Above},
-      {Above, Above, Below, Below, Below, Above, Above},
-      {Above, Above, Above, "   ", "   ", Above, Above},
-      {Below, Below, Below, Below, Below, Equal, "   "},
-      {Above, Above, Above, "   ", "   ", Above, Above},
-      {Below, Below, Below, Below, Below, "   ", Equal},
+      {Ab, Be, Be, Be, Be, Ab, Ab},
+      {Ab, Ab, Be, Be, Be, Ab, Ab},
+      {Ab, Ab, Be, Be, Be, Ab, Ab},
+      {Ab, Ab, Ab, "", "", Ab, Ab},
+      {Be, Be, Be, Be, Be, Eq, ""},
+      {Ab, Ab, Ab, "", "", Ab, Ab},
+      {Be, Be, Be, Be, Be, "", Eq},
     }
     Vt = []string{"+", "*", "↑", "i", "(", ")", "#"}
     Vn = []string{"E", "T", "F", "P"}

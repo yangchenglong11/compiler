@@ -12,6 +12,13 @@ import (
   "bufio"
 )
 
+type equ struct {
+  op     int; //四元式操作码
+  op1    int; //操作数1在符号表中的入口地址
+  op2    int; //操作数2在符号表中的入口地址
+  result int; //结果变量在符号表中的入口地址
+}
+
 func main() {
   var (
     input      string
@@ -55,19 +62,19 @@ func main() {
       K -> int | bool | real
     */
     grammar = map[string]string{
-      "S": "L",
-      "i,L": "L",
-      "i": "L",
-      "id:=E": "S",
+      "S":             "L",
+      "i,L":           "L",
+      "i":             "L",
+      "id:=E":         "S",
       "ifBthenSelseS": "S",
-      "whileBdoS": "S",
-      "beginLend": "S",
-      "varD": "S",
-      "L:K;": "D",
-      "L:K;D": "D",
-      "int": "K",
-      "bool": "K",
-      "real": "K",
+      "whileBdoS":     "S",
+      "beginLend":     "S",
+      "varD":          "S",
+      "L:K;":          "D",
+      "L:K;D":         "D",
+      "int":           "K",
+      "bool":          "K",
+      "real":          "K",
     }
     relation = [][]string{
       //# ; i , id := if then else while do begin end var : int bool real
