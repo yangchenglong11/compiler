@@ -5,6 +5,10 @@
 
 package general_code
 
+import (
+	lex "github.com/yangchenglong11/compiler/lexical_analysis"
+)
+
 type Equ struct {
 	Op     int // 四元式操作码
 	Op1    int // 操作数在符号表中的入口地址
@@ -58,7 +62,7 @@ func DivBasicBlock(e []Equ) []GenStruct {
 }
 
 func isJump(i int) bool {
-	if _, ok := Jump[i]; ok == true {
+	if (i >= lex.MachineCode["jmp"] && i <= lex.MachineCode["jnz"]) {
 		return true
 	}
 	return false

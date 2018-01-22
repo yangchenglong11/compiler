@@ -4,15 +4,3 @@
  */
 
 package general_code
-
-var (
-	Jump = map[string]bool{"J":true,"Jl":true,"Jg":true,"Jne":true}
-)
-
-const (
-	J = iota+1
-	Jl
-	Jg
-	Jne
-
-)
