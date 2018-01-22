@@ -63,3 +63,18 @@ func isJump(i int) bool {
 	}
 	return false
 }
+
+func General(g []GenStruct) string {
+	var l int
+	if len(g) <= 0 {
+		return ""
+	}
+
+	l = g[0].Label
+
+	for i := range g {
+		if g[i].Label <= l {
+
+		}
+	}
+}

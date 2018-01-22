@@ -6,7 +6,7 @@
 package general_code
 
 var (
-	Jump = map[int]bool{J:true,Jl:true,Jg:true,Jne:true}
+	Jump = map[string]bool{"J":true,"Jl":true,"Jg":true,"Jne":true}
 )
 
 const (

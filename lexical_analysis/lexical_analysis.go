@@ -159,11 +159,12 @@ func LexicalAnalysis(path string) (*Tokens, *Symbles, error) {
 			if o == 39 {
 				continue
 			}
+
 			to := Token{
 				Label: len(token.T),
 				Name:  s,
 				Code:  o,
-				Addr:  -1,
+				Addr:  -2,
 			}
 			token.T = append(token.T, to)
 			continue
