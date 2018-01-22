@@ -7,23 +7,23 @@ package main
 
 import (
   "fmt"
-  "strings"
-  "os"
-  "bufio"
+  //"strings"
+  //"os"
+  //"bufio"
 
-  "github.com/yangchenglong11/compiler/syntax_analysis"
-  "github.com/yangchenglong11/compiler/lexical_analysis"
+  syntax "github.com/yangchenglong11/compiler/syntax_analysis"
+  lexical "github.com/yangchenglong11/compiler/lexical_analysis"
 )
 
 func main() {
   var (
-    Ab         = syntax.Ab
-    Be         = syntax.Be
-    Eq         = syntax.Eq
-    input      string
-    inputStack syntax.Stack
-    stack      syntax.Stack
-    parser     syntax.Parser
+    Ab     = syntax.Ab
+    Be     = syntax.Be
+    Eq     = syntax.Eq
+    //inputStr string
+    input  syntax.Stack
+    stack  syntax.Stack
+    parser syntax.Parser
 
     /*
       P’ -> #P#
@@ -73,12 +73,12 @@ func main() {
       {Ab, "", Be, "", "", Be, "", Ab, Be, "", Be, Ab, Be, "", Ab, "", "", "", "", "", "", "", ""},
       {"", "", Be, "", "", Be, "", "", Be, "", Be, Eq, Be, "", "", "", "", "", "", "", "", "", ""},
       {Ab, "", "", "", "", "", "", Ab, "", "", "", Ab, "", "", Ab, "", "", "", "", "", "", "", ""},
-      {"", "", "", "", "", "", "", "", "", "", "", "", "", Eq, "", "", "", "", "", "", "", "", ""},
+      {"", "", Be, "", "", Be, "", "", Be, "", Be, "", Be, Eq, Be, "", "", "", "", "", "", "", ""},
       {Ab, "", "", "", "", "", "", Ab, "", "", "", Ab, "", "", Ab, "", "", "", "", "", "", "", ""},
-      {"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", Be, Be, Be, "", "", "", "", ""},
-      {"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""},
-      {"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""},
-      {"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""},
+      {"", "", "", "", "", "", "", "", "", "", "", "", "", Ab, "", Be, Be, Be, "", "", "", "", ""},
+      {"", "", "", "", "", "", "", "", "", "", "", "", "", Ab, "", "", "", "", "", "", "", "", ""},
+      {"", "", "", "", "", "", "", "", "", "", "", "", "", Ab, "", "", "", "", "", "", "", "", ""},
+      {"", "", "", "", "", "", "", "", "", "", "", "", "", Ab, "", "", "", "", "", "", "", "", ""},
       {"", "", Ab, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""},
       {"", "", Ab, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""},
       {Ab, "", Be, "", "", "", "", Ab, "", "", "", Ab, "", "", Ab, "", "", "", "", "", "", "", Be},
@@ -92,32 +92,76 @@ func main() {
   parser.DisplayGrammar()
   parser.DisplayRelationTable()
 
-  fmt.Println("\n输入语句, 以#结束, 每个终结符以空格隔开, 例如 program begin if id > id then id := id - i else id := i end #:")
-  reader := bufio.NewReader(os.Stdin)
-  strBytes, _, err := reader.ReadLine()
+  tokens, symbles, err := lexical.LexicalAnalysis("../../lexical_analysis/test.lu")
   if err != nil {
     fmt.Println(err)
-  } else {
-    input = string(strBytes)
-    split := strings.Split(input, " ")
-    if split[len(split)-1] != "#" {
-      fmt.Println("unvalid input")
-    } else {
-      for i := range split {
-        inputStack.Push(split[i])
-      }
-      stack.Push("#")
-
-      result, err := parser.Analysis(&stack, &inputStack)
-      if err != nil {
-        fmt.Println(err)
+    return
+  }
+  if tokens != nil {
+    tokens.String()
+    for _, v := range tokens.T {
+      if v.Addr < 0 {
+        t := syntax.Token{Label: v.Label, Name: v.Name, Code: v.Code, Addr: v.Addr, Output: v.Name}
+        input.Push(t)
       } else {
-        if result {
-          fmt.Println("归约分析成功")
+        if v.Code == lexical.MachineCode[lexical.Identifier] {
+          t := syntax.Token{Label: v.Label, Name: v.Name, Code: v.Code, Addr: v.Addr, Output: "id"}
+          input.Push(t)
         } else {
-          fmt.Println("归约分析失败")
+          t := syntax.Token{Label: v.Label, Name: v.Name, Code: v.Code, Addr: v.Addr, Output: "i"}
+          input.Push(t)
         }
       }
     }
   }
+  fmt.Println()
+  if symbles != nil {
+    symbles.String()
+  }
+  for i := range lexical.LexicalErrors {
+    fmt.Printf("%+v", lexical.LexicalErrors[i])
+    fmt.Println()
+  }
+
+  stack.Push(syntax.Token{Output: "#"})
+  result, err := parser.Analysis(&stack, &input)
+  if err != nil {
+    fmt.Println(err)
+    return
+  } else {
+    if result {
+      fmt.Println("归约分析成功")
+    } else {
+      fmt.Println("归约分析失败")
+    }
+  }
+
+  //fmt.Println("\n输入语句, 以#结束, 每个终结符以空格隔开, 例如 program begin if id > id then id := id - i else id := i end #:")
+  //reader := bufio.NewReader(os.Stdin)
+  //strBytes, _, err := reader.ReadLine()
+  //if err != nil {
+  //  fmt.Println(err)
+  //} else {
+  //  inputStr = string(strBytes)
+  //  split := strings.Split(inputStr, " ")
+  //  if split[len(split)-1] != "#" {
+  //    fmt.Println("unvalid input")
+  //  } else {
+  //    for i := range split {
+  //      input.Push(syntax.Token{Output: split[i]})
+  //    }
+  //    stack.Push(syntax.Token{Output: "#"})
+  //
+  //    result, err := parser.Analysis(&stack, &input)
+  //    if err != nil {
+  //      fmt.Println(err)
+  //    } else {
+  //      if result {
+  //        fmt.Println("归约分析成功")
+  //      } else {
+  //        fmt.Println("归约分析失败")
+  //      }
+  //    }
+  //  }
+  //}
 }

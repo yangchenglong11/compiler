@@ -1,6 +1,6 @@
 program
   begin
-    var a, b integer;
+    var a, b: integer;
     a := 5
     b := 9
     while a < b do

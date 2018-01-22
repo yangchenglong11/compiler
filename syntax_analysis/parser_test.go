@@ -3,7 +3,7 @@
  *     Initial: 2018/01/21        Wang RiYu
  */
 
-package syntax
+package syntax_analysis
 
 import (
   "testing"
@@ -45,10 +45,11 @@ func TestParser(t *testing.T) {
   parser.Init(grammar, Vt, Vn, relation)
 
   /* input1 */
-  stack1 := Stack{"#"}
+  stack1 := Stack{}
   input1 := Stack{}
+  stack1.Push(Token{Output: "#"})
   for _, v := range []string{"i", "+", "i", "*", "i", "#"} { // 可规约
-    input1.Push(v)
+    input1.Push(Token{Output: v})
   }
   result, err := parser.Analysis(&stack1, &input1)
   if err != nil {
@@ -59,10 +60,11 @@ func TestParser(t *testing.T) {
   }
 
   /* input2 */
-  stack2 := Stack{"#"}
+  stack2 := Stack{}
   input2 := Stack{}
+  stack2.Push(Token{Output: "#"})
   for _, v := range []string{"(", "i", "*", "i", ")", "(", ")", "#"} { // 不可规约
-    input2.Push(v)
+    input2.Push(Token{Output: v})
   }
   result, _ = parser.Analysis(&stack2, &input2)
   if result {

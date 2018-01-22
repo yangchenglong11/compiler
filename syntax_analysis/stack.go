@@ -3,14 +3,24 @@
  *     Initial: 2018/01/18        Wang RiYu
  */
 
-package syntax
+package syntax_analysis
 
 import (
   "fmt"
   "strings"
 )
 
-type Stack []string
+var TokenN = Token{Output: "N"}
+
+type Token struct {
+  Label  int
+  Name   string
+  Code   int
+  Addr   int
+  Output string
+}
+
+type Stack []Token
 
 func (stack Stack) Len() int {
   return len(stack)
@@ -21,7 +31,12 @@ func (stack Stack) IsEmpty() bool {
 }
 
 func (stack Stack) ToString() string {
-  return strings.Join(stack, " ")
+  var result []string
+  for _, v := range stack {
+    result = append(result, v.Output)
+  }
+
+  return strings.Join(result, " ")
 }
 
 func (stack *Stack) Index(index int) string {
@@ -29,56 +44,56 @@ func (stack *Stack) Index(index int) string {
     fmt.Println("out of range in stack")
     return ""
   }
-  return Stack(*stack)[index]
+  return Stack(*stack)[index].Output
 }
 
-func (stack *Stack) Push(value string) {
-  *stack = append(*stack, value)
+func (stack *Stack) Push(t Token) {
+  *stack = append(*stack, t)
 }
 
 func (stack Stack) Top() string {
   if stack.IsEmpty() {
     return ""
   }
-  return string(stack[stack.Len()-1])
+  return stack[stack.Len()-1].Output
 }
 
-func (stack *Stack) Pop() string {
+func (stack *Stack) Pop() Token {
   theStack := *stack
   if theStack.IsEmpty() {
-    return ""
+    return Token{}
   }
-  value := theStack[stack.Len()-1]
+  t := theStack[stack.Len()-1]
   *stack = theStack[:stack.Len()-1]
-  return value
+  return t
 }
 
 func (stack Stack) Left() string {
   if stack.IsEmpty() {
     return ""
   }
-  return stack[0]
+  return stack[0].Output
 }
 
-func (stack *Stack) Shift() string {
+func (stack *Stack) Shift() Token {
   theStack := *stack
   if theStack.IsEmpty() {
-    return ""
+    return Token{}
   }
-  value := theStack[0]
+  t := theStack[0]
   *stack = theStack[1:]
-  return value
+  return t
 }
 
-func (stack *Stack) Replace(start, end int, substring string) {
+func (stack *Stack) Replace(start, end int, sub Token) {
   if start > end || start < 0 || end < 0 {
-    fmt.Println("unvalid params")
+    fmt.Println("unvalid index")
     return
   }
 
   var theStack = *stack
-  *stack = append([]string{}, theStack[:start]...)
-  *stack = append(*stack, substring)
+  *stack = append([]Token{}, theStack[:start]...)
+  *stack = append(*stack, sub)
   if end < theStack.Len()-1 {
     *stack = append(*stack, theStack[end+1:]...)
   }

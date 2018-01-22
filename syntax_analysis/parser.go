@@ -3,7 +3,7 @@
  *     Initial: 2018/01/17        Wang RiYu
  */
 
-package syntax
+package syntax_analysis
 
 import (
   "fmt"
@@ -64,10 +64,11 @@ func (parser Parser) getRelation(a, b string) (string, error) { // 获取 a 与 
 }
 
 func (parser Parser) Analysis(stack, input *Stack) (bool, error) { // 算符优先分析过程
-  l := len(input.ToString()) + 2
-  width := fmt.Sprintf("%%-%ds%%%ds%%%ds\n", l, l, l+25)
-  fmt.Printf(fmt.Sprintf("%%-%ds%%%ds%%%ds\n", l-2, l-2, l+20), "栈", "输入流", "操作")
-  fmt.Printf(width, stack.ToString(), input.ToString(), "initial")
+  inputLen := len(input.ToString()) + 10
+  stackLen := len(stack.ToString()) + 10
+  totalLen := inputLen + stackLen
+  fmt.Printf(fmt.Sprintf("\n%%-%ds%%%ds%%%ds\n", stackLen, inputLen-4, 42), "栈", "输入流", "操作")
+  fmt.Printf(fmt.Sprintf("%%-%ds%%%ds%%%ds\n", stackLen, inputLen, 45), stack.ToString(), input.ToString(), "initial")
   var k = 0
   for input.Left() != "#" || stack.ToString() != "# N" {
     newStr := input.Left()
@@ -89,7 +90,8 @@ func (parser Parser) Analysis(stack, input *Stack) (bool, error) { // 算符优�
       if relation == Be || relation == Eq {
         stack.Push(input.Shift())
         operation := fmt.Sprintf("%s < %s, push %s", curStr, newStr, newStr)
-        fmt.Printf(width, stack.ToString(), input.ToString(), operation)
+        stackLen := len(stack.ToString()) + 10
+        fmt.Printf(fmt.Sprintf("%%-%ds%%%ds%%%ds\n", stackLen, totalLen-stackLen, 45), stack.ToString(), input.ToString(), operation)
         k++
       } else if relation == Ab {
         for {
@@ -109,8 +111,9 @@ func (parser Parser) Analysis(stack, input *Stack) (bool, error) { // 算符优�
               //fmt.Println("下标p q j k", p, q, j, k)
               //fmt.Println("当前栈", stack.ToString(), j, k)
               operation := fmt.Sprintf("%s < %s > %s, replace %s", p, q, newStr, Stack(*stack)[j+1:k+1].ToString())
-              stack.Replace(j+1, k+1, "N")
-              fmt.Printf(width, stack.ToString(), input.ToString(), operation)
+              stack.Replace(j+1, k+1, TokenN)
+              stackLen := len(stack.ToString()) + 10
+              fmt.Printf(fmt.Sprintf("%%-%ds%%%ds%%%ds\n", stackLen, totalLen-stackLen, 45), stack.ToString(), input.ToString(), operation)
               k = j + 1
               break
             } else if relation == Eq {
@@ -146,6 +149,7 @@ func (parser Parser) DisplayGrammar() {
   for k, v := range result {
     fmt.Printf("%s -> %s\n", k, v)
   }
+  fmt.Println()
 }
 
 func (parser Parser) DisplayRelationTable() {
@@ -163,4 +167,5 @@ func (parser Parser) DisplayRelationTable() {
     }
     fmt.Println()
   }
+  fmt.Println()
 }
