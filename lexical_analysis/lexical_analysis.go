@@ -27,7 +27,7 @@
  *     Initial: 2017/12/25        Yang Chenglong
  */
 
-package main
+package lexical_analysis
 
 import (
 	"fmt"
@@ -617,26 +617,6 @@ func handlerOther(b byte, buf *Buffer) (int, string, error) {
 
 func isSpace(b byte) bool {
 	return b == Space
-}
-
-func main() {
-	t, s, err := LexicalAnalysis("./test.lu")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	if t != nil {
-		t.String()
-	}
-	fmt.Println()
-	if s != nil {
-		s.String()
-	}
-
-	for i := range LexicalErrors {
-		fmt.Printf("%+v", LexicalErrors[i])
-		fmt.Println()
-	}
 }
 
 func isExist(s string,a Symbles) (int,bool) {

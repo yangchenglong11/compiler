@@ -27,7 +27,7 @@
  *     Initial: 2017/12/25        Yang Chenglong
  */
 
-package main
+package lexical_analysis
 
 import (
 	"fmt"

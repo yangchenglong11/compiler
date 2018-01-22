@@ -27,7 +27,7 @@
  *     Initial: 2018/01/19        Yang Chenglong
  */
 
-package main
+package lexical_analysis
 
 import (
 	"errors"
