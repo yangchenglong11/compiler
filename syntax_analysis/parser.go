@@ -11,9 +11,9 @@ import (
 )
 
 const (
-  Above = ">"
-  Below = "<"
-  Equal = "="
+  Ab = ">" // Above
+  Be = "<" // Below
+  Eq = "=" // Equal
 )
 
 type Parser struct {
@@ -52,17 +52,21 @@ func (parser Parser) getRelation(a, b string) (string, error) { // 获取 a 与 
       indexB = i
     }
   }
-  if indexA < 0 || indexB < 0 {
+  //fmt.Println("index", indexA, indexB)
+  if indexA < 0 {
     return "", errors.New("no this letter")
+  }
+  if indexB < 0 {
+    return Eq, nil
   }
 
   return parser.relationTable[indexA][indexB], nil
 }
 
 func (parser Parser) Analysis(stack, input *Stack) (bool, error) { // 算符优先分析过程
-  l := input.Len() + 2
-  width := fmt.Sprintf("%%-%ds%%%ds%%20s\n", l, l)
-  fmt.Printf(fmt.Sprintf("%%-%ds%%%ds%%16s\n", l-2, l-2), "栈", "输入流", "操作")
+  l := len(input.ToString()) + 2
+  width := fmt.Sprintf("%%-%ds%%%ds%%%ds\n", l, l, l+25)
+  fmt.Printf(fmt.Sprintf("%%-%ds%%%ds%%%ds\n", l-2, l-2, l+20), "栈", "输入流", "操作")
   fmt.Printf(width, stack.ToString(), input.ToString(), "initial")
   var k = 0
   for input.Left() != "#" || stack.ToString() != "#N" {
@@ -82,12 +86,12 @@ func (parser Parser) Analysis(stack, input *Stack) (bool, error) { // 算符优�
     if err != nil {
       return false, err
     } else {
-      if relation == Below || relation == Equal {
+      if relation == Be || relation == Eq {
         stack.Push(input.Shift())
-        operation := fmt.Sprintf("%s<%s,push %s", curStr, newStr, newStr)
+        operation := fmt.Sprintf("%s < %s,push %s", curStr, newStr, newStr)
         fmt.Printf(width, stack.ToString(), input.ToString(), operation)
         k++
-      } else if relation == Above {
+      } else if relation == Ab {
         for {
           q := curStr
           if j > 0 && parser.vtContrainsAny(stack.Index(j-1)) {
@@ -101,15 +105,15 @@ func (parser Parser) Analysis(stack, input *Stack) (bool, error) { // 算符优�
           if err != nil {
             return false, err
           } else {
-            if relation == Below {
+            if relation == Be {
               //fmt.Println("下标p q j k", p, q, j, k)
               //fmt.Println("当前栈", stack.ToString(), j, k)
-              operation := fmt.Sprintf("%s<%s>%s,replace %s", p, q, newStr, Stack(*stack)[j+1:k+1].ToString())
+              operation := fmt.Sprintf("%s < %s > %s,replace %s", p, q, newStr, Stack(*stack)[j+1:k+1].ToString())
               stack.Replace(j+1, k+1, "N")
               fmt.Printf(width, stack.ToString(), input.ToString(), operation)
               k = j + 1
               break
-            } else if relation == Equal {
+            } else if relation == Eq {
               curStr = p
             } else {
               return false, err
