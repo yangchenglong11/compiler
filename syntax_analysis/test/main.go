@@ -12,45 +12,18 @@ import (
   "bufio"
 
   "github.com/yangchenglong11/compiler/syntax_analysis"
+  "github.com/yangchenglong11/compiler/lexical_analysis"
 )
 
 func main() {
   var (
-    Ab = syntax.Ab
-    Be = syntax.Be
-    Eq = syntax.Eq
+    Ab         = syntax.Ab
+    Be         = syntax.Be
+    Eq         = syntax.Eq
     input      string
     inputStack syntax.Stack
     stack      syntax.Stack
     parser     syntax.Parser
-    /* 文法
-      E’ -> #E#
-      E -> E + T | T
-      T -> T * F | F
-      F -> P ↑ F | P
-      P -> (E) | i
-    */
-    //grammar = map[string]string{// 每一个 k, v 对应表达式 value -> key
-    //  "E+T": "E",
-    //  "T": "E",
-    //  "T*F": "T",
-    //  "F": "T",
-    //  "P↑F": "F",
-    //  "P": "F",
-    //  "(E)": "P",
-    //  "i": "P",
-    //}
-    //relation = [][]string{// 算符优先关系
-    //  {Ab, Be, Be, Be, Be, Ab, Ab},
-    //  {Ab, Ab, Be, Be, Be, Ab, Ab},
-    //  {Ab, Ab, Be, Be, Be, Ab, Ab},
-    //  {Ab, Ab, Ab, "", "", Ab, Ab},
-    //  {Be, Be, Be, Be, Be, Eq, ""},
-    //  {Ab, Ab, Ab, "", "", Ab, Ab},
-    //  {Be, Be, Be, Be, Be, "", Eq},
-    //}
-    //Vt = []string{"+", "*", "↑", "i", "(", ")", "#"} // 终结符
-    //Vn = []string{"E’", "E", "T", "F", "P"}          // 非终结符
 
     /*
       P’ -> #P#
@@ -65,27 +38,27 @@ func main() {
       I -> i | id
     */
     grammar = map[string]string{
-      "#P#": "P’",
-      "program L": "P",
-      "S":             "L",
-      "id, L":           "L",
-      "id":             "L",
-      "id := E":         "S",
+      "#P#":                "P’",
+      "program L":          "P",
+      "S":                  "L",
+      "id, L":              "L",
+      "id":                 "L",
+      "id := E":            "S",
       "if B then S else S": "S",
-      "while B do S":     "S",
-      "begin L end":     "S",
-      "var D;":          "S",
-      "L: K":          "D",
-      "integer":           "K",
-      "bool":          "K",
-      "real":          "K",
-      "id R id": "B",
-      "<": "R",
-      ">": "R",
-      "i": "I",
-      "id’": "I",
-      "I + I": "E",
-      "I - I": "E",
+      "while B do S":       "S",
+      "begin L end":        "S",
+      "var D;":             "S",
+      "L: K":               "D",
+      "integer":            "K",
+      "bool":               "K",
+      "real":               "K",
+      "id R id":            "B",
+      "<":                  "R",
+      ">":                  "R",
+      "i":                  "I",
+      "id’":                "I",
+      "I + I":              "E",
+      "I - I":              "E",
     }
     relation = [][]string{
       {Eq, Be, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""},

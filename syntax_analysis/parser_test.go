@@ -13,17 +13,19 @@ func TestParser(t *testing.T) {
   var (
     parser Parser
     /* 文法
+      E’ -> #E#
       E -> E + T | T
       T -> T * F | F
       F -> P ↑ F | P
       P -> (E) | i
     */
     grammar = map[string]string{// 每一个 k, v 对应表达式 value -> key
-      "E+T": "E",
+      "E#E": "E’",
+      "E + T": "E",
       "T": "E",
-      "T*F": "T",
+      "T * F": "T",
       "F": "T",
-      "P↑F": "F",
+      "P ↑ F": "F",
       "P": "F",
       "(E)": "P",
       "i": "P",
@@ -38,7 +40,7 @@ func TestParser(t *testing.T) {
       {Be, Be, Be, Be, Be, "", Eq},
     }
     Vt = []string{"+", "*", "↑", "i", "(", ")", "#"}
-    Vn = []string{"E", "T", "F", "P"}
+    Vn = []string{"E’", "E", "T", "F", "P"}
   )
   parser.Init(grammar, Vt, Vn, relation)
 
@@ -53,7 +55,7 @@ func TestParser(t *testing.T) {
     t.Error(err)
   }
   if !result {
-    t.Error("规约失败")
+    t.Error("归约失败")
   }
 
   /* input2 */
@@ -64,6 +66,6 @@ func TestParser(t *testing.T) {
   }
   result, _ = parser.Analysis(&stack2, &input2)
   if result {
-    t.Error("规约出错")
+    t.Error("归约出错")
   }
 }
