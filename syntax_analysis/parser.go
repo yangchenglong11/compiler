@@ -3,7 +3,7 @@
  *     Initial: 2018/01/17        Wang RiYu
  */
 
-package main
+package syntax
 
 import (
   "fmt"
@@ -69,7 +69,7 @@ func (parser Parser) Analysis(stack, input *Stack) (bool, error) { // 算符优�
   fmt.Printf(fmt.Sprintf("%%-%ds%%%ds%%%ds\n", l-2, l-2, l+20), "栈", "输入流", "操作")
   fmt.Printf(width, stack.ToString(), input.ToString(), "initial")
   var k = 0
-  for input.Left() != "#" || stack.ToString() != "#N" {
+  for input.Left() != "#" || stack.ToString() != "# N" {
     newStr := input.Left()
     curStr := stack.Top()
     //fmt.Println("栈顶元素与输入元素", curStr, newStr)
@@ -88,7 +88,7 @@ func (parser Parser) Analysis(stack, input *Stack) (bool, error) { // 算符优�
     } else {
       if relation == Be || relation == Eq {
         stack.Push(input.Shift())
-        operation := fmt.Sprintf("%s < %s,push %s", curStr, newStr, newStr)
+        operation := fmt.Sprintf("%s < %s, push %s", curStr, newStr, newStr)
         fmt.Printf(width, stack.ToString(), input.ToString(), operation)
         k++
       } else if relation == Ab {
@@ -108,7 +108,7 @@ func (parser Parser) Analysis(stack, input *Stack) (bool, error) { // 算符优�
             if relation == Be {
               //fmt.Println("下标p q j k", p, q, j, k)
               //fmt.Println("当前栈", stack.ToString(), j, k)
-              operation := fmt.Sprintf("%s < %s > %s,replace %s", p, q, newStr, Stack(*stack)[j+1:k+1].ToString())
+              operation := fmt.Sprintf("%s < %s > %s, replace %s", p, q, newStr, Stack(*stack)[j+1:k+1].ToString())
               stack.Replace(j+1, k+1, "N")
               fmt.Printf(width, stack.ToString(), input.ToString(), operation)
               k = j + 1
@@ -151,15 +151,15 @@ func (parser Parser) DisplayGrammar() {
 func (parser Parser) DisplayRelationTable() {
   length := len(parser.Vt)
   fmt.Printf("--------------------\n   %s\n--------------------\n", "算符优先关系表")
-  fmt.Print("     ")
+  fmt.Print("       ")
   for i := 0; i < length; i++ {
-    fmt.Printf("%6s", parser.Vt[i])
+    fmt.Printf("%8s", parser.Vt[i])
   }
   fmt.Println()
   for i := 0; i < length; i++ {
-    fmt.Printf("%-5s %5s", parser.Vt[i], parser.relationTable[i][0])
+    fmt.Printf("%-7s %7s", parser.Vt[i], parser.relationTable[i][0])
     for j := 1; j < len(parser.relationTable[i]); j++ {
-      fmt.Printf("%6s", parser.relationTable[i][j])
+      fmt.Printf("%8s", parser.relationTable[i][j])
     }
     fmt.Println()
   }

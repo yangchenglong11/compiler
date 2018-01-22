@@ -3,7 +3,7 @@
  *     Initial: 2018/01/21        Wang RiYu
  */
 
-package main
+package syntax
 
 import (
   "testing"

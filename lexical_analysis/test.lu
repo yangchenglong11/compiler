@@ -4,5 +4,5 @@ program
     a := 5
     b := 9
     while a < b do
-      if c > 0 then c := c - 1 else c := 0
+      if b > 0 then b := b - 1 else b := 0
 end

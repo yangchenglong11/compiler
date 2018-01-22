@@ -3,7 +3,7 @@
  *     Initial: 2018/01/18        Wang RiYu
  */
 
-package main
+package syntax
 
 import (
   "fmt"
@@ -21,7 +21,7 @@ func (stack Stack) IsEmpty() bool {
 }
 
 func (stack Stack) ToString() string {
-  return strings.Join(stack, "")
+  return strings.Join(stack, " ")
 }
 
 func (stack *Stack) Index(index int) string {
