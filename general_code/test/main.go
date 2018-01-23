@@ -14,16 +14,40 @@ import (
 func main() {
 	e := []gen.Equ{
 		{
-			Op:     1,
-			Op1:    3,
-			Op2:    0,
-			Result: 2,
+			Op:     lex.MachineCode["+"],
+			Op1:    1,
+			Op2:    2,
+			Result: 3,
 		},
 		{
-			Op:     4,
-			Op1:    4,
-			Op2:    0,
+			Op:     lex.MachineCode["-"],
+			Op1:    2,
+			Op2:    3,
+			Result: 4,
+		},
+		{
+			Op:     lex.MachineCode["*"],
+			Op1:    3,
+			Op2:    4,
 			Result: 1,
+		},
+		{
+			Op:     lex.MachineCode["/"],
+			Op1:    2,
+			Op2:    5,
+			Result: 1,
+		},
+		{
+			Op:     43,
+			Op1:    4,
+			Op2:    3,
+			Result: 1,
+		},
+		{
+			Op:     40,
+			Op1:    3,
+			Op2:    2,
+			Result: 4,
 		},
 	}
 
@@ -31,13 +55,14 @@ func main() {
 		S: []lex.Symble{
 			{Number: 1, Kind: 18, Name: "a"},
 			{Number: 2, Kind: 18, Name: "b"},
-			{Number: 3, Kind: 19, Name: "0"},
-			{Number: 4, Kind: 19, Name: "1"},
+			{Number: 3, Kind: 18, Name: "c"},
+			{Number: 4, Kind: 18, Name: "d"},
+			{Number: 5, Kind: 19, Name: "4"},
+			{Number: 6, Kind: 19, Name: "5"},
 		},
 	}
 	gen.InitSymble(s)
 	g := gen.DivBasicBlock(e)
-	fmt.Printf("%+v", g)
 	st := gen.HandleBlocks(g)
 	fmt.Println(st)
 }

@@ -7,7 +7,8 @@ package general_code
 
 import (
 	"fmt"
-	lex "github.com/yangchenglong11/compiler/lexical_analysis"
+	//lex "github.com/yangchenglong11/compiler/lexical_analysis"
+	"math/rand"
 )
 
 type Equ struct {
@@ -66,7 +67,7 @@ func DivBasicBlock(e []Equ) []GenStruct {
 }
 
 func isJump(i int) bool {
-	if i >= lex.MachineCode["jmp"] && i <= lex.MachineCode["jnz"] {
+	if i >= 40  {
 		return true
 	}
 	return false
@@ -74,7 +75,6 @@ func isJump(i int) bool {
 
 func HandleBlocks(g []GenStruct) string {
 	var l int
-	//var code string
 	var temp []GenStruct
 	if len(g) <= 0 {
 		return ""
@@ -82,13 +82,23 @@ func HandleBlocks(g []GenStruct) string {
 
 	l = g[0].Label
 
-	for i := range g {
+	for i := 0; i < len(g); i++ {
 		for j := i; ; j++ {
+			if j > len(g)-1 {
+				break
+			}
 			if g[i].Label <= l {
-				temp = append(temp, g[i])
+				temp = append(temp, g[j])
+				i = j
+			} else {
+				break
 			}
 		}
-		//code = fmt.Sprintf("%s\n%s", code, GeneralCode(temp))
+
+		GeneralCode(temp)
+		temp = make([]GenStruct, 0)
+
+		l = g[i].Label
 	}
 
 	return code
@@ -113,7 +123,7 @@ func isValueContain(r []int, v int) bool {
 }
 
 func HandleVariableInfo(g []GenStruct) []GenStruct {
-	for i := len(g) - 1; i > 0; i-- {
+	for i := len(g) - 1; i >= 0; i-- {
 		g[i].ResuIsActive = GetActive(g[i].Equ.Result)
 		g[i].ResuIsUsed = GetUsed(g[i].Equ.Result)
 		T.S[GetIndex(g[i].Equ.Result)].IsUsed = 0
@@ -132,41 +142,73 @@ func HandleVariableInfo(g []GenStruct) []GenStruct {
 }
 
 func GETREG(g GenStruct) REG {
-	var re REG
-	for i := range R {
-		s := AVALUE[g.Equ.Op1]
-		if (isRegContain(s, R[i]) && isValueContain(R[i].Value, g.Equ.Op1)) || (g.Equ.Op1 == g.Equ.Result) || (g.Op1IsUsed == 0 && g.Op1IsActive == 0) {
-			re = R[i]
-		} else if len(R[i].Value) == 0 {
-			re = R[i]
-		} else {
-			re = R[i]
-			for j := range R[i].Value {
-				if !isRegContain(AVALUE[R[i].Value[j]], M) {
-					str := fmt.Sprintf("MOV M %s", R[i].Name)
-					code = fmt.Sprintf("%s\n%s", code, str)
-					R[i].Value = DeleteValue(R[i].Value, R[i].Value[j])
-					AVALUE[R[i].Value[j]] = []REG{M}
-				}
-			}
-		}
+	var (
+		re   REG
+		dLen int
+		bLen int
+		r    int
+	)
+
+	s := AVALUE[g.Equ.Op1]
+
+	d := (isRegContain(s, DX) && isValueContain(DX.Value, g.Equ.Op1)) && ((g.Equ.Op1 == g.Equ.Result) || (g.Op1IsUsed == 0 && g.Op1IsActive == 0))
+	b := (isRegContain(s, BX) && isValueContain(BX.Value, g.Equ.Op1)) && ((g.Equ.Op1 == g.Equ.Result) || (g.Op1IsUsed == 0 && g.Op1IsActive == 0))
+	if d {
+		re = DX
+		DX.Value = append(DX.Value, g.Equ.Op1)
+		goto finish
+	} else if b {
+		re = BX
+		BX.Value = append(BX.Value, g.Equ.Op1)
+		goto finish
 	}
 
+	dLen = len(DX.Value)
+	bLen = len(BX.Value)
+	if dLen == 0 {
+		re = DX
+		DX.Value = append(DX.Value, g.Equ.Op1)
+		goto finish
+	} else if bLen == 0 {
+		re = BX
+		BX.Value = append(BX.Value, g.Equ.Op1)
+		goto finish
+	}
+	r = rand.Intn(2)
+	re = *R[r]
+	for j := range R[r].Value {
+		if !isRegContain(AVALUE[R[r].Value[j]], M) {
+			str := fmt.Sprintf("MOV M, %s", R[r].Name)
+			code = fmt.Sprintf("%s\n%s\n", code, str)
+			R[r].Value = DeleteValue(R[r].Value, R[r].Value[j])
+			AVALUE[R[r].Value[j]] = []REG{M}
+		}
+		R[r].Value = append(R[r].Value, g.Equ.Op1)
+		goto finish
+	}
+
+finish:
 	return re
+}
+
+var jm = map[int]string{
+	42:"JG",
+	40:"JMP",
+	41:"JL",
+	43:"JNE",
 }
 
 func GeneralCode(g []GenStruct) string {
 	g = HandleVariableInfo(g)
 	for i := range g {
-
-		if g[i].Equ.Result > 0 && g[i].Equ.Op2 > 0 && g[i].Equ.Op1 > 0 {
-			code = fmt.Sprintf("MOV AX, %d\n%s AX, %s\nMOV %s, AX", GetName(g[i].Equ.Op1), OpCode[g[i].Equ.Op], GetName(g[i].Equ.Op2), GetName(g[i].Equ.Result))
+		re := GETREG(g[i])
+		if isJump(g[i].Equ.Op) {
+			code = fmt.Sprintf("%sMOV %s, %s\nCMP %s, %s\n%s %s\n",code,re.Name,GetName(g[i].Equ.Op1),re.Name,GetName(g[i].Equ.Op2), jm[g[i].Equ.Op], GetName(g[i].Equ.Result))
 		}
 
 		if g[i].Equ.Result > 0 && g[i].Equ.Op2 > 0 && g[i].Equ.Op1 > 0 {
-			code = fmt.Sprintf("MOV AX, %d\n%s AX, %s\nMOV %s, AX", GetName(g[i].Equ.Op1), OpCode[g[i].Equ.Op], GetName(g[i].Equ.Op2), GetName(g[i].Equ.Result))
+			code = fmt.Sprintf("%sMOV %s, %s\n%s %s, %s\nMOV %s, %s\n", code, re.Name, GetName(g[i].Equ.Op1), OpCode[g[i].Equ.Op], re.Name, GetName(g[i].Equ.Op2), GetName(g[i].Equ.Result), re.Name)
 		}
-
 	}
 	return code
 }

@@ -43,7 +43,7 @@ type Symbles struct {
 }
 
 var M = REG{
-	Name:  "Memory",
+	Name:  "M",
 	Value: make([]int, 0),
 }
 var BX = REG{
@@ -56,10 +56,8 @@ var DX = REG{
 	Value: make([]int, 0),
 }
 
-var R = []REG{BX, DX, M}
+var R = []*REG{&BX, &DX}
 
 var AVALUE = make(map[int][]REG)
 
 var code string
-
-// var RVALUE  = make(map[REG][]int)
