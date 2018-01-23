@@ -8,8 +8,8 @@ package general_code
 import (
 	"fmt"
 	//lex "github.com/yangchenglong11/compiler/lexical_analysis"
-	"math/rand"
 	sy "github.com/yangchenglong11/compiler/syntax_analysis"
+	"math/rand"
 )
 
 //type Equ struct {
@@ -20,10 +20,10 @@ import (
 //}
 
 type GenStruct struct {
-	Label        int // 语句序号
-	Code         int // 语句的块内码
+	Label        int    // 语句序号
+	Code         int    // 语句的块内码
 	Equ          sy.Equ // 原四元式
-	Out_port     int // 记录该四元式是否为一个基本块的入口，是则为1，否则为0。
+	Out_port     int    // 记录该四元式是否为一个基本块的入口，是则为1，否则为0。
 	Op1IsActive  int
 	Op1IsUsed    int
 	Op2IsActive  int
@@ -68,7 +68,7 @@ func DivBasicBlock(e []sy.Equ) []GenStruct {
 }
 
 func isJump(i int) bool {
-	if i >= 40 {
+	if i > 40 {
 		return true
 	}
 	return false
@@ -203,14 +203,48 @@ func GeneralCode(g []GenStruct) string {
 	g = HandleVariableInfo(g)
 	for i := range g {
 		re := GETREG(g[i])
-		if isJump(g[i].Equ.Op) {
-			code = fmt.Sprintf("%sMOV %s, %s\nCMP %s, %s\n%s %s\n", code, re.Name, GetName(g[i].Equ.Op1), re.Name, GetName(g[i].Equ.Op2), jm[g[i].Equ.Op], GetName(g[i].Equ.Result))
+		if g[i].Equ.Op == 31 {
+			if GetName(g[i].Equ.Op1) == ""{
+				e := []string{"a","b"}
+				code = fmt.Sprintf("%sMOV %s, %s\nMOV %s, %s\n", code, re.Name, e[rand.Intn(2)], GetName(g[i].Equ.Result), re.Name)
+				continue
+			}
+			code = fmt.Sprintf("%sMOV %s, %s\nMOV %s, %s\n", code, re.Name, GetName(g[i].Equ.Op1), GetName(g[i].Equ.Result), re.Name)
 			continue
 		}
 
+		if g[i].Equ.Op == 40 {
+			e := []string{"a","b"}
+			code = fmt.Sprintf("%sJMP addr(%s)\n", code, e[rand.Intn(2)])
+			continue
+		}
 
+		if isJump(g[i].Equ.Op) {
+			code = fmt.Sprintf("%sMOV %s, %s\nCMP %s, %s\n%s addr(%s)\n", code, re.Name, GetName(g[i].Equ.Op1), re.Name, GetName(g[i].Equ.Op2), jm[g[i].Equ.Op], GetName(g[i].Equ.Result))
+			continue
+		}
+
+		if g[i].Equ.Result <= 0 || g[i].Equ.Op <= 0 {
+			code = fmt.Sprintf("%sMOV %s, %s\n", code, GetName(g[i].Equ.Op1), GetName(g[i].Equ.Op2))
+			continue
+		}
+
+		if g[i].Equ.Op2 <= 0 || g[i].Equ.Op2 == 39 {
+			code = fmt.Sprintf("%sMOV %s, %s\n%s %s\nMOV %s, %s\n", code, re.Name, GetName(g[i].Equ.Op1), OpCode[g[i].Equ.Op], re.Name, GetName(g[i].Equ.Result), re.Name)
+			continue
+		}
+
+		if g[i].Equ.Op1 <= 0 || g[i].Equ.Op1 == 39 {
+			code = fmt.Sprintf("%sMOV %s, %s\n%s %s\nMOV %s, %s\n", code, re.Name, GetName(g[i].Equ.Op2), OpCode[g[i].Equ.Op], re.Name, GetName(g[i].Equ.Result), re.Name)
+			continue
+		}
 
 		if g[i].Equ.Result > 0 && g[i].Equ.Op2 > 0 && g[i].Equ.Op1 > 0 {
+			if GetName(g[i].Equ.Result) == "" {
+				e := []string{"a","b"}
+				code = fmt.Sprintf("%sMOV %s, %s\n%s %s, %s\nMOV %s, %s\n", code, re.Name, GetName(g[i].Equ.Op1), OpCode[g[i].Equ.Op], re.Name,  GetName(g[i].Equ.Op2), e[rand.Intn(2)], re.Name)
+				continue
+			}
 			code = fmt.Sprintf("%sMOV %s, %s\n%s %s, %s\nMOV %s, %s\n", code, re.Name, GetName(g[i].Equ.Op1), OpCode[g[i].Equ.Op], re.Name, GetName(g[i].Equ.Op2), GetName(g[i].Equ.Result), re.Name)
 		}
 	}

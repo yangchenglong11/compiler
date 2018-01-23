@@ -10,7 +10,6 @@ import (
 )
 
 const (
-	SBUFSIZE   = 256 // 定义扫描缓冲区的大小
 	Identifier = "TypeIdentifier"
 	Integer    = "TypeInteger"
 	Real       = "TypeReal"
