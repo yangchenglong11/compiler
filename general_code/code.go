@@ -17,9 +17,6 @@ type Equ struct {
 	Result int // 结果变量在符号表中的入口地址
 }
 
-type BasicBlock struct {
-}
-
 type GenStruct struct {
 	Label        int // 语句序号
 	Code         int // 语句的块内码
@@ -34,7 +31,7 @@ type GenStruct struct {
 }
 
 func DivBasicBlock(e []Equ) []GenStruct {
-	g := make([]GenStruct, len(e))
+	g := make([]GenStruct, 0)
 
 	for i := range e {
 		gen := GenStruct{Equ: e[i]}
@@ -60,7 +57,7 @@ func DivBasicBlock(e []Equ) []GenStruct {
 		g[i].Label = count
 		g[i].Code = b
 		b = b + 1
-		if g[i].Out_port == 1 {
+		if g[i].Out_port == 1 && i != 0 {
 			count = count + 1
 			b = 1
 		}
@@ -115,7 +112,7 @@ func isValueContain(r []int, v int) bool {
 	return false
 }
 
-func HandleVariableInfo(g []GenStruct) []GenStruct{
+func HandleVariableInfo(g []GenStruct) []GenStruct {
 	for i := len(g) - 1; i > 0; i-- {
 		g[i].ResuIsActive = GetActive(g[i].Equ.Result)
 		g[i].ResuIsUsed = GetUsed(g[i].Equ.Result)
@@ -138,17 +135,17 @@ func GETREG(g GenStruct) REG {
 	var re REG
 	for i := range R {
 		s := AVALUE[g.Equ.Op1]
-		if (isRegContain(s, R[i]) && isValueContain(R[i].Value, g.Equ.Op1)) || (g.Equ.Op1 == g.Equ.Result) || (g.Op1IsUsed==0&&g.Op1IsActive==0) {
+		if (isRegContain(s, R[i]) && isValueContain(R[i].Value, g.Equ.Op1)) || (g.Equ.Op1 == g.Equ.Result) || (g.Op1IsUsed == 0 && g.Op1IsActive == 0) {
 			re = R[i]
 		} else if len(R[i].Value) == 0 {
 			re = R[i]
 		} else {
 			re = R[i]
 			for j := range R[i].Value {
-				if !isRegContain(AVALUE[R[i].Value[j]],M) {
-					str := fmt.Sprintf("MOV M %s",R[i].Name)
-					code = fmt.Sprintf("%s\n%s",code,str)
-					R[i].Value = DeleteValue(R[i].Value,R[i].Value[j])
+				if !isRegContain(AVALUE[R[i].Value[j]], M) {
+					str := fmt.Sprintf("MOV M %s", R[i].Name)
+					code = fmt.Sprintf("%s\n%s", code, str)
+					R[i].Value = DeleteValue(R[i].Value, R[i].Value[j])
 					AVALUE[R[i].Value[j]] = []REG{M}
 				}
 			}
@@ -158,7 +155,7 @@ func GETREG(g GenStruct) REG {
 	return re
 }
 
-func GeneralCode(g []GenStruct) {
+func GeneralCode(g []GenStruct) string {
 	g = HandleVariableInfo(g)
 	for i := range g {
 
@@ -171,12 +168,13 @@ func GeneralCode(g []GenStruct) {
 		}
 
 	}
+	return code
 }
 
-func DeleteValue(s []int, d int)[]int {
-	for i := range s{
+func DeleteValue(s []int, d int) []int {
+	for i := range s {
 		if s[i] == d {
-			for j := i ;j<len(s)-1;j++ {
+			for j := i; j < len(s)-1; j++ {
 				s[j] = s[j+1]
 			}
 		}

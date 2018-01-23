@@ -6,7 +6,9 @@
 package main
 
 import (
+	"fmt"
 	gen "github.com/yangchenglong11/compiler/general_code"
+	lex "github.com/yangchenglong11/compiler/lexical_analysis"
 )
 
 func main() {
@@ -23,67 +25,19 @@ func main() {
 			Op2:    0,
 			Result: 1,
 		},
-		{
-			Op:     2,
-			Op1:    1,
-			Op2:    1,
-			Result: 3,
-		},
-		{
-			Op:     1,
-			Op1:    1,
-			Op2:    1,
-			Result: 4,
-		},
-		{
-			Op:     1,
-			Op1:    1,
-			Op2:    1,
-			Result: 5,
-		},
-		{
-			Op:     1,
-			Op1:    1,
-			Op2:    1,
-			Result: 6,
-		},
-		{
-			Op:     1,
-			Op1:    1,
-			Op2:    1,
-			Result: 7,
-		},
-		{
-			Op:     1,
-			Op1:    1,
-			Op2:    1,
-			Result: 8,
-		},
-		{
-			Op:     1,
-			Op1:    1,
-			Op2:    1,
-			Result: 9,
-		},
-		{
-			Op:     1,
-			Op1:    1,
-			Op2:    1,
-			Result: 10,
-		},
-		{
-			Op:     1,
-			Op1:    1,
-			Op2:    1,
-			Result: 11,
-		},
-		{
-			Op:     1,
-			Op1:    1,
-			Op2:    1,
-			Result: 12,
-		},
 	}
 
-	gen.DivBasicBlock(e)
+	s := lex.Symbles{
+		S: []lex.Symble{
+			{Number: 1, Kind: 18, Name: "a"},
+			{Number: 2, Kind: 18, Name: "b"},
+			{Number: 3, Kind: 19, Name: "0"},
+			{Number: 4, Kind: 19, Name: "1"},
+		},
+	}
+	gen.InitSymble(s)
+	g := gen.DivBasicBlock(e)
+	fmt.Printf("%+v", g)
+	st := gen.HandleBlocks(g)
+	fmt.Println(st)
 }

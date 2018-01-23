@@ -21,10 +21,19 @@ type REG struct {
 	Value []int
 }
 
+func InitSymble(sy lex.Symbles) {
+	for i := range sy.S {
+		s := Symble{
+			Symble: sy.S[i],
+		}
+		T.S = append(T.S, s)
+	}
+}
+
 var T Symbles
 
 type Symble struct {
-	Symble    lex.Symble
+	Symble   lex.Symble
 	IsActive int
 	IsUsed   int
 }
@@ -43,7 +52,7 @@ var BX = REG{
 }
 
 var DX = REG{
-	Name:  "BX",
+	Name:  "DX",
 	Value: make([]int, 0),
 }
 
@@ -51,6 +60,6 @@ var R = []REG{BX, DX, M}
 
 var AVALUE = make(map[int][]REG)
 
-
 var code string
+
 // var RVALUE  = make(map[REG][]int)

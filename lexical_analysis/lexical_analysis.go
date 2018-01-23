@@ -39,8 +39,8 @@ func LexicalAnalysis(path string) (*Tokens, *Symbles, error) {
 	var (
 		token  Tokens
 		symble Symbles
-		place int
-		exist bool
+		place  int
+		exist  bool
 	)
 	c, err := GetContent(path)
 	if err != nil {
@@ -62,7 +62,7 @@ func LexicalAnalysis(path string) (*Tokens, *Symbles, error) {
 			}
 
 			if t == MachineCode[Integer] {
-				if place,exist = isExist(fmt.Sprintf("%d", int(num)),symble);exist {
+				if place, exist = isExist(fmt.Sprintf("%d", int(num)), symble); exist {
 					to := Token{
 						Label: len(token.T),
 						Name:  fmt.Sprintf("%d", int(num)),
@@ -88,7 +88,7 @@ func LexicalAnalysis(path string) (*Tokens, *Symbles, error) {
 				continue
 			}
 
-			if place,exist = isExist(fmt.Sprintf("%f", num),symble);exist {
+			if place, exist = isExist(fmt.Sprintf("%f", num), symble); exist {
 				to := Token{
 					Label: len(token.T),
 					Name:  fmt.Sprintf("%f", num),
@@ -128,7 +128,7 @@ func LexicalAnalysis(path string) (*Tokens, *Symbles, error) {
 				continue
 			}
 
-			if place,exist = isExist(s,symble);exist {
+			if place, exist = isExist(s, symble); exist {
 				to := Token{
 					Label: len(token.T),
 					Name:  s,
@@ -600,12 +600,12 @@ func isSpace(b byte) bool {
 	return b == Space
 }
 
-func isExist(s string,a Symbles) (int,bool) {
+func isExist(s string, a Symbles) (int, bool) {
 	for i := range a.S {
 		if s == a.S[i].Name {
-			return a.S[i].Number,true
+			return a.S[i].Number, true
 		}
 	}
 
-	return 0,false
+	return 0, false
 }
