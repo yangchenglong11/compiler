@@ -60,6 +60,7 @@ func LexicalAnalysis(path string) (*Tokens, *Symbles, error) {
 			if err != nil {
 				return nil, nil, err
 			}
+
 			if t == MachineCode[Integer] {
 				if place,exist = isExist(fmt.Sprintf("%d", int(num)),symble);exist {
 					to := Token{
@@ -155,6 +156,9 @@ func LexicalAnalysis(path string) (*Tokens, *Symbles, error) {
 			o, s, err := handlerOther(b, c)
 			if err != nil {
 				return nil, nil, err
+			}
+			if o == MachineCode["err"] {
+				continue
 			}
 			if o == 39 {
 				continue
