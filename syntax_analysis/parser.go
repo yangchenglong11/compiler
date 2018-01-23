@@ -8,6 +8,9 @@ package syntax_analysis
 import (
   "fmt"
   "errors"
+  "strings"
+
+  lexical "github.com/yangchenglong11/compiler/lexical_analysis"
 )
 
 const (
@@ -15,6 +18,15 @@ const (
   Be = "<" // Below
   Eq = "=" // Equal
 )
+
+type Equ struct {
+  op     int //四元式操作码
+  op1    int // 操作数在符号表中的入口地址
+  op2    int // 操作数在符号表中的入口地址
+  result int // 结果变量在符号表中的入口地址
+}
+
+var Equs []Equ
 
 type Parser struct {
   grammar       map[string]string // 文法
@@ -61,6 +73,43 @@ func (parser Parser) getRelation(a, b string) (string, error) { // 获取 a 与 
   }
 
   return parser.relationTable[indexA][indexB], nil
+}
+
+func (parser Parser) generateCode(input Stack) {
+  split := strings.Split(input.ToString(), " ")
+
+  if len(split) > 0 {
+    if split[0] == "while" {
+      newEqu := Equ{op: lexical.MachineCode["jmp"], op1: lexical.MachineCode[""], op2: lexical.MachineCode[""], result: 0}
+      Equs = append(Equs, newEqu)
+      //fmt.Printf("--- while %s %+v\n", split, newEqu)
+    }
+
+    if split[0] == "if" {
+      //fmt.Printf("--- if %s %+v\n", split, Equs)
+    }
+  }
+
+  if len(split) > 1 {
+    if split[1] == "<" || split[1] == ">" {
+      newEqu := Equ{op: lexical.MachineCode[fmt.Sprintf("j%s", split[1])], op1: input[0].Addr, op2: input[2].Addr, result: len(Equs)}
+      Equs = append(Equs, newEqu)
+      Equs = append(Equs, Equ{op: lexical.MachineCode["jmp"], op1: lexical.MachineCode[""], op2: lexical.MachineCode[""], result: 0})
+      //fmt.Printf("--- relop %s %+v\n", split, newEqu)
+    }
+
+    if split[1] == ":=" {
+      newEqu := Equ{op: lexical.MachineCode[split[1]], op1: len(Equs)-1, op2: lexical.MachineCode[""], result: input[0].Addr}
+      Equs = append(Equs, newEqu)
+      //fmt.Printf("--- := %s %+v\n", split, newEqu)
+    }
+
+    if split[1] == "-" || split[1] == "+" {
+      newEqu := Equ{op: lexical.MachineCode[split[1]], op1: input[0].Addr, op2: input[2].Addr, result: len(Equs)-1}
+      Equs = append(Equs, newEqu)
+      //fmt.Printf("--- operator %s %+v\n", split, newEqu)
+    }
+  }
 }
 
 func (parser Parser) Analysis(stack, input *Stack) (bool, error) { // 算符优先分析过程
@@ -110,10 +159,17 @@ func (parser Parser) Analysis(stack, input *Stack) (bool, error) { // 算符优�
             if relation == Be {
               //fmt.Println("下标p q j k", p, q, j, k)
               //fmt.Println("当前栈", stack.ToString(), j, k)
-              operation := fmt.Sprintf("%s < %s > %s, replace %s", p, q, newStr, Stack(*stack)[j+1:k+1].ToString())
-              stack.Replace(j+1, k+1, TokenN)
+              replace := Stack(*stack)[j+1:k+1]
+
+              token := TokenN
+              if len(replace) == 1 && (replace[0].Output == "id" || replace[0].Output == "i") {
+                token = Token{Output: "N", Name: replace[0].Name, Addr: replace[0].Addr, Label: replace[0].Label, Code: replace[0].Code}
+              }
+              operation := fmt.Sprintf("%s < %s > %s, replace %s", p, q, newStr, replace.ToString())
+              stack.Replace(j+1, k+1, token)
               stackLen := len(stack.ToString()) + 10
               fmt.Printf(fmt.Sprintf("%%-%ds%%%ds%%%ds\n", stackLen, totalLen-stackLen, 45), stack.ToString(), input.ToString(), operation)
+              parser.generateCode(replace) // 生成四元式
               k = j + 1
               break
             } else if relation == Eq {

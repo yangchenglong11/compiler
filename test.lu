@@ -1,0 +1,6 @@
+program
+  var a, b: integer;
+begin
+  while a < b do
+    if b > 0 then b := b - 1 else if a > 0 then a := a - b else a := a + b
+end

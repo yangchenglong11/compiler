@@ -7,12 +7,11 @@ package main
 
 import (
   "fmt"
-  //"strings"
-  //"os"
-  //"bufio"
+  "strings"
+  "os"
+  "bufio"
 
   syntax "github.com/yangchenglong11/compiler/syntax_analysis"
-  lexical "github.com/yangchenglong11/compiler/lexical_analysis"
 )
 
 func main() {
@@ -20,7 +19,7 @@ func main() {
     Ab = syntax.Ab
     Be = syntax.Be
     Eq = syntax.Eq
-    //inputStr string
+    inputStr string
     input  syntax.Stack
     stack  syntax.Stack
     parser syntax.Parser
@@ -93,83 +92,32 @@ func main() {
   parser.DisplayGrammar()
   parser.DisplayRelationTable()
 
-  tokens, symbles, err := lexical.LexicalAnalysis("../../lexical_analysis/test.lu")
+  fmt.Println("\n输入语句, 以#结束, 每个终结符以空格隔开, 例如 program while id > 0 do if id > i then id := id - i else id := id + i #:")
+  reader := bufio.NewReader(os.Stdin)
+  strBytes, _, err := reader.ReadLine()
   if err != nil {
     fmt.Println(err)
-    return
-  }
-  if tokens != nil {
-    fmt.Printf("----------------\n     %s\n----------------\n", "token表")
-    tokens.String()
-    for _, v := range tokens.T {
-      if v.Addr < 0 {
-        t := syntax.Token{Label: v.Label, Name: v.Name, Code: v.Code, Addr: v.Addr, Output: v.Name}
-        input.Push(t)
+  } else {
+    inputStr = string(strBytes)
+    split := strings.Split(inputStr, " ")
+    if split[len(split)-1] != "#" {
+      fmt.Println("unvalid input")
+    } else {
+      for i := range split {
+        input.Push(syntax.Token{Output: split[i]})
+      }
+      stack.Push(syntax.Token{Output: "#"})
+
+      result, err := parser.Analysis(&stack, &input)
+      if err != nil {
+        fmt.Println(err)
       } else {
-        if v.Code == lexical.MachineCode[lexical.Identifier] {
-          t := syntax.Token{Label: v.Label, Name: v.Name, Code: v.Code, Addr: v.Addr, Output: "id"}
-          input.Push(t)
+        if result {
+          fmt.Println("归约分析成功")
         } else {
-          t := syntax.Token{Label: v.Label, Name: v.Name, Code: v.Code, Addr: v.Addr, Output: "i"}
-          input.Push(t)
+          fmt.Println("归约分析失败")
         }
       }
     }
-    if symbles != nil {
-      fmt.Printf("\n----------------\n     %s\n----------------\n", "符号表")
-      symbles.String()
-    }
-
-    fmt.Printf("\n----------------\n    %s\n----------------\n", "语法分析")
-    stack.Push(syntax.Token{Output: "#"})
-    input.Push(syntax.Token{Output: "#"})
-    result, err := parser.Analysis(&stack, &input)
-    if err != nil {
-      fmt.Println(err)
-      return
-    } else {
-      if result {
-        fmt.Println("归约分析成功")
-      } else {
-        fmt.Println("归约分析失败")
-      }
-    }
   }
-
-  if len(lexical.LexicalErrors) > 0 {
-    fmt.Printf("\n----------------\n    %s\n----------------\n", "词法错误")
-    for i := range lexical.LexicalErrors {
-      fmt.Printf("%+v", lexical.LexicalErrors[i])
-      fmt.Println()
-    }
-  }
-
-  //fmt.Println("\n输入语句, 以#结束, 每个终结符以空格隔开, 例如 program begin if id > id then id := id - i else id := i end #:")
-  //reader := bufio.NewReader(os.Stdin)
-  //strBytes, _, err := reader.ReadLine()
-  //if err != nil {
-  //  fmt.Println(err)
-  //} else {
-  //  inputStr = string(strBytes)
-  //  split := strings.Split(inputStr, " ")
-  //  if split[len(split)-1] != "#" {
-  //    fmt.Println("unvalid input")
-  //  } else {
-  //    for i := range split {
-  //      input.Push(syntax.Token{Output: split[i]})
-  //    }
-  //    stack.Push(syntax.Token{Output: "#"})
-  //
-  //    result, err := parser.Analysis(&stack, &input)
-  //    if err != nil {
-  //      fmt.Println(err)
-  //    } else {
-  //      if result {
-  //        fmt.Println("归约分析成功")
-  //      } else {
-  //        fmt.Println("归约分析失败")
-  //      }
-  //    }
-  //  }
-  //}
 }
