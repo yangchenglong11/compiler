@@ -9,19 +9,20 @@ import (
 	"fmt"
 	//lex "github.com/yangchenglong11/compiler/lexical_analysis"
 	"math/rand"
+	sy "github.com/yangchenglong11/compiler/syntax_analysis"
 )
 
-type Equ struct {
-	Op     int // 四元式操作码
-	Op1    int // 操作数在符号表中的入口地址
-	Op2    int // 操作数在符号表中的入口地址
-	Result int // 结果变量在符号表中的入口地址
-}
+//type Equ struct {
+//	Op     int // 四元式操作码
+//	Op1    int // 操作数在符号表中的入口地址
+//	Op2    int // 操作数在符号表中的入口地址
+//	Result int // 结果变量在符号表中的入口地址
+//}
 
 type GenStruct struct {
 	Label        int // 语句序号
 	Code         int // 语句的块内码
-	Equ          Equ // 原四元式
+	Equ          sy.Equ // 原四元式
 	Out_port     int // 记录该四元式是否为一个基本块的入口，是则为1，否则为0。
 	Op1IsActive  int
 	Op1IsUsed    int
@@ -31,7 +32,7 @@ type GenStruct struct {
 	ResuIsUsed   int
 }
 
-func DivBasicBlock(e []Equ) []GenStruct {
+func DivBasicBlock(e []sy.Equ) []GenStruct {
 	g := make([]GenStruct, 0)
 
 	for i := range e {

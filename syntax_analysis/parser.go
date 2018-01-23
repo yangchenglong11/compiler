@@ -20,10 +20,10 @@ const (
 )
 
 type Equ struct {
-	op     int //四元式操作码
-	op1    int // 操作数在符号表中的入口地址
-	op2    int // 操作数在符号表中的入口地址
-	result int // 结果变量在符号表中的入口地址
+	Op     int //四元式操作码
+	Op1    int // 操作数在符号表中的入口地址
+	Op2    int // 操作数在符号表中的入口地址
+	Result int // 结果变量在符号表中的入口地址
 }
 
 var Equs []Equ
@@ -80,7 +80,7 @@ func (parser Parser) generateCode(input Stack) {
 
 	if len(split) > 0 {
 		if split[0] == "while" {
-			newEqu := Equ{op: lexical.MachineCode["jmp"], op1: lexical.MachineCode[""], op2: lexical.MachineCode[""], result: 0}
+			newEqu := Equ{Op: lexical.MachineCode["jmp"], Op1: lexical.MachineCode[""], Op2: lexical.MachineCode[""], Result: 0}
 			Equs = append(Equs, newEqu)
 			//fmt.Printf("--- while %s %+v\n", split, newEqu)
 		}
@@ -92,20 +92,20 @@ func (parser Parser) generateCode(input Stack) {
 
 	if len(split) > 1 {
 		if split[1] == "<" || split[1] == ">" {
-			newEqu := Equ{op: lexical.MachineCode[fmt.Sprintf("j%s", split[1])], op1: input[0].Addr, op2: input[2].Addr, result: len(Equs)}
+			newEqu := Equ{Op: lexical.MachineCode[fmt.Sprintf("j%s", split[1])], Op1: input[0].Addr, Op2: input[2].Addr, Result: len(Equs)}
 			Equs = append(Equs, newEqu)
-			Equs = append(Equs, Equ{op: lexical.MachineCode["jmp"], op1: lexical.MachineCode[""], op2: lexical.MachineCode[""], result: 0})
+			Equs = append(Equs, Equ{Op: lexical.MachineCode["jmp"], Op1: lexical.MachineCode[""], Op2: lexical.MachineCode[""], Result: 0})
 			//fmt.Printf("--- relop %s %+v\n", split, newEqu)
 		}
 
 		if split[1] == ":=" {
-			newEqu := Equ{op: lexical.MachineCode[split[1]], op1: len(Equs) - 1, op2: lexical.MachineCode[""], result: input[0].Addr}
+			newEqu := Equ{Op: lexical.MachineCode[split[1]], Op1: len(Equs) - 1, Op2: lexical.MachineCode[""], Result: input[0].Addr}
 			Equs = append(Equs, newEqu)
 			//fmt.Printf("--- := %s %+v\n", split, newEqu)
 		}
 
 		if split[1] == "-" || split[1] == "+" {
-			newEqu := Equ{op: lexical.MachineCode[split[1]], op1: input[0].Addr, op2: input[2].Addr, result: len(Equs) - 1}
+			newEqu := Equ{Op: lexical.MachineCode[split[1]], Op1: input[0].Addr, Op2: input[2].Addr, Result: len(Equs) - 1}
 			Equs = append(Equs, newEqu)
 			//fmt.Printf("--- operator %s %+v\n", split, newEqu)
 		}

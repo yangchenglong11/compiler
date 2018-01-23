@@ -8,6 +8,7 @@ package main
 import (
 	"fmt"
 
+	gen "github.com/yangchenglong11/compiler/general_code"
 	lexical "github.com/yangchenglong11/compiler/lexical_analysis"
 	syntax "github.com/yangchenglong11/compiler/syntax_analysis"
 )
@@ -95,7 +96,7 @@ func main() {
 		return
 	}
 	if tokens != nil {
-		fmt.Printf("----------------\n     %s\n----------------\n", "token表")
+		fmt.Printf("----------------\n     %s\n----------------\n", "token table")
 		tokens.String()
 		for _, v := range tokens.T {
 			if v.Addr < 0 {
@@ -112,11 +113,11 @@ func main() {
 			}
 		}
 		if symbles != nil {
-			fmt.Printf("\n----------------\n     %s\n----------------\n", "符号表")
+			fmt.Printf("\n----------------\n     %s\n----------------\n", "symble table")
 			symbles.String()
 		}
 
-		fmt.Printf("\n----------------\n    %s\n----------------\n", "语法分析")
+		fmt.Printf("\n----------------\n    %s\n----------------\n", "syntax analysis")
 		stack.Push(syntax.Token{Output: "#"})
 		input.Push(syntax.Token{Output: "#"})
 		result, err := parser.Analysis(&stack, &input)
@@ -125,18 +126,25 @@ func main() {
 			return
 		} else {
 			if result {
-				fmt.Println("归约分析成功")
+				fmt.Println("syntax analysis succeed! ")
 
-				fmt.Printf("\n----------------\n   %s\n----------------\n", "输出四元式")
+				fmt.Printf("\n----------------\n   %s\n----------------\n","print the expression:")
 				for _, v := range syntax.Equs {
 					fmt.Printf("%+v\n", v)
 				}
 			} else {
-				fmt.Println("归约分析失败")
+				fmt.Println("syntax analysis failed!")
 			}
 		}
 	}
 
+	fmt.Println()
+	fmt.Println("print the assembly code:")
+	gen.InitSymble(*symbles)
+	g := gen.DivBasicBlock(syntax.Equs)
+	st := gen.HandleBlocks(g)
+	fmt.Println(st)
+	fmt.Println()
 	if len(lexical.LexicalErrors) > 0 {
 		fmt.Printf("\n----------------\n    %s\n----------------\n", "词法错误")
 		for i := range lexical.LexicalErrors {

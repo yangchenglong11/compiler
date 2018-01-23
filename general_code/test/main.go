@@ -9,6 +9,7 @@ import (
 	"fmt"
 	gen "github.com/yangchenglong11/compiler/general_code"
 	lex "github.com/yangchenglong11/compiler/lexical_analysis"
+	sy "github.com/yangchenglong11/compiler/syntax_analysis"
 )
 
 func main() {
@@ -20,7 +21,7 @@ func main() {
 	(jne,d,c,a)
 	(jl,c,b,d)
 	*/
-	e := []gen.Equ{
+	e := []sy.Equ{
 		{
 			Op:     lex.MachineCode["+"],
 			Op1:    1,
