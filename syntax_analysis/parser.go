@@ -67,7 +67,7 @@ func (parser Parser) Analysis(stack, input *Stack) (bool, error) { // 算符优�
   inputLen := len(input.ToString()) + 10
   stackLen := len(stack.ToString()) + 10
   totalLen := inputLen + stackLen
-  fmt.Printf(fmt.Sprintf("\n%%-%ds%%%ds%%%ds\n", stackLen, inputLen-4, 42), "栈", "输入流", "操作")
+  fmt.Printf(fmt.Sprintf("%%-%ds%%%ds%%%ds\n", stackLen, inputLen-4, 42), "栈", "输入流", "操作")
   fmt.Printf(fmt.Sprintf("%%-%ds%%%ds%%%ds\n", stackLen, inputLen, 45), stack.ToString(), input.ToString(), "initial")
   var k = 0
   for input.Left() != "#" || stack.ToString() != "# N" {
