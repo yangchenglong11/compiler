@@ -12,6 +12,14 @@ import (
 )
 
 func main() {
+	/*
+	(+,a,b,c)
+	(-,b,c,d)
+	(*,c,d,a)
+	(/,b,4,a)
+	(jne,d,c,a)
+	(jl,c,b,d)
+	*/
 	e := []gen.Equ{
 		{
 			Op:     lex.MachineCode["+"],
@@ -38,13 +46,13 @@ func main() {
 			Result: 1,
 		},
 		{
-			Op:     43,
+			Op:     lex.MachineCode["jne"],
 			Op1:    4,
 			Op2:    3,
 			Result: 1,
 		},
 		{
-			Op:     40,
+			Op:     lex.MachineCode["jl"],
 			Op1:    3,
 			Op2:    2,
 			Result: 4,

@@ -67,7 +67,7 @@ func DivBasicBlock(e []Equ) []GenStruct {
 }
 
 func isJump(i int) bool {
-	if i >= 40  {
+	if i >= 40 {
 		return true
 	}
 	return false
@@ -192,10 +192,10 @@ finish:
 }
 
 var jm = map[int]string{
-	42:"JG",
-	40:"JMP",
-	41:"JL",
-	43:"JNE",
+	42: "JG",
+	40: "JMP",
+	41: "JL",
+	43: "JNE",
 }
 
 func GeneralCode(g []GenStruct) string {
@@ -203,8 +203,11 @@ func GeneralCode(g []GenStruct) string {
 	for i := range g {
 		re := GETREG(g[i])
 		if isJump(g[i].Equ.Op) {
-			code = fmt.Sprintf("%sMOV %s, %s\nCMP %s, %s\n%s %s\n",code,re.Name,GetName(g[i].Equ.Op1),re.Name,GetName(g[i].Equ.Op2), jm[g[i].Equ.Op], GetName(g[i].Equ.Result))
+			code = fmt.Sprintf("%sMOV %s, %s\nCMP %s, %s\n%s %s\n", code, re.Name, GetName(g[i].Equ.Op1), re.Name, GetName(g[i].Equ.Op2), jm[g[i].Equ.Op], GetName(g[i].Equ.Result))
+			continue
 		}
+
+
 
 		if g[i].Equ.Result > 0 && g[i].Equ.Op2 > 0 && g[i].Equ.Op1 > 0 {
 			code = fmt.Sprintf("%sMOV %s, %s\n%s %s, %s\nMOV %s, %s\n", code, re.Name, GetName(g[i].Equ.Op1), OpCode[g[i].Equ.Op], re.Name, GetName(g[i].Equ.Op2), GetName(g[i].Equ.Result), re.Name)
